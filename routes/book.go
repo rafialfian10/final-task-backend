@@ -1,0 +1,23 @@
+package routes
+
+import (
+	"waysbook/handlers"
+	"waysbook/pkg/middleware"
+	"waysbook/pkg/mysql"
+	"waysbook/repositories"
+
+	"github.com/gorilla/mux"
+)
+
+func BookRoutes(r *mux.Router) {
+	bookRepository := repositories.RepositoryBook(mysql.DB)
+	h := handlers.HanlderBook(bookRepository)
+
+	r.HandleFunc("/books", h.FindBooks).Methods("GET")
+	r.HandleFunc("/book/{id}", h.FindBooks).Methods("GET")
+	r.HandleFunc("/book", middleware.AuthAdmin(middleware.UploadFilePdf(middleware.UploadFileImage(h.CreateBook)))).Methods("POST")
+	// r.HandleFunc("/update-book/{id}", middleware.Auth(middleware.UploadFileImage(h.UpdateBook))).Methods("PATCH")
+	r.HandleFunc("/book/{id}", middleware.AuthAdmin(h.DeleteBook)).Methods("DELETE")
+	// r.HandleFunc("/update_book_promo", middleware.Auth(h.UpdateBookPromo)).Methods("PATCH")
+	// r.HandleFunc("/get_books_promo", h.GetBooksByPromo).Methods("GET")
+}
