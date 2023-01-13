@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"os"
 
 	"waysbook/database"
 	"waysbook/pkg/mysql"
@@ -48,8 +49,8 @@ func main() {
 	var allowedMethods = handlers.AllowedMethods([]string{"GET", "POST", "PATCH", "DELETE", "PUT", "HEAD"})
 	var allowedOrigins = handlers.AllowedOrigins([]string{"*"})
 
-	// var port = os.Getenv("PORT")
-	// var port = 5000
+	var PORT = os.Getenv("PORT")
+
 	fmt.Println("Your server at http://localhost:5000")
-	http.ListenAndServe("localhost:5000", handlers.CORS(allowedHeaders, allowedMethods, allowedOrigins)(r))
+	http.ListenAndServe(":"+PORT, handlers.CORS(allowedHeaders, allowedMethods, allowedOrigins)(r))
 }

@@ -10,9 +10,8 @@ type BookRepository interface {
 	FindBooks() ([]models.Book, error)
 	GetBook(ID int) (models.Book, error)
 	CreateBook(book models.Book) (models.Book, error)
-	UpdateBook(book models.Book) (models.Book, error)
+	UpdateBook(Id int, discount int) (models.Book, error)
 	DeleteBook(book models.Book) (models.Book, error)
-	UpdateBookPromo(Id int, discount int) (models.Book, error)
 	GetBooksByPromo() ([]models.Book, error)
 }
 
@@ -40,19 +39,7 @@ func (r *repository) CreateBook(book models.Book) (models.Book, error) {
 	return book, err
 }
 
-func (r *repository) UpdateBook(book models.Book) (models.Book, error) {
-	err := r.db.Debug().Model(&book).Updates(book).Error
-
-	return book, err
-}
-
-func (r *repository) DeleteBook(book models.Book) (models.Book, error) {
-	err := r.db.Debug().Delete(&book).Error
-
-	return book, err
-}
-
-func (r *repository) UpdateBookPromo(Id int, discount int) (models.Book, error) {
+func (r *repository) UpdateBook(Id int, discount int) (models.Book, error) {
 	var book models.Book
 	r.db.First(&book, "id=?", Id)
 
@@ -62,7 +49,13 @@ func (r *repository) UpdateBookPromo(Id int, discount int) (models.Book, error) 
 	// Calculate Price After Discount
 	book.PriceAfterDiscount = book.Price - (book.Price * discount / 100)
 
-	err := r.db.Save(&book).Error
+	err := r.db.Model(&book).Updates(book).Error
+
+	return book, err
+}
+
+func (r *repository) DeleteBook(book models.Book) (models.Book, error) {
+	err := r.db.Debug().Delete(&book).Error
 
 	return book, err
 }
