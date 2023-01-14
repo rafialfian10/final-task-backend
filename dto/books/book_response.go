@@ -1,4 +1,4 @@
-package booksdto
+package bookdto
 
 type BookResponse struct {
 	Id                 int    `json:"id"`
@@ -14,4 +14,5 @@ type BookResponse struct {
 	Description        string `json:"description" gorm:"type: text"`
 	BookAttachment     string `json:"book_attachment"`
 	Thumbnail          string `json:"thumbnail"`
+	Quota              int    `json:"quota" form:"quota"`
 }

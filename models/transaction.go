@@ -1,25 +1,14 @@
 package models
 
-import "time"
-
 type Transaction struct {
-	ID        int       `json:"id" gorm:"primary_key:auto_increment"`
-	Total     int       `json:"total"`
-	UserID    int       `json:"user_id"` // who doing the transaction
-	User      User      `json:"user"`
-	Status    string    `json:"status"`
-	CreatedAt time.Time `json:"-"`
-	UpdatedAt time.Time `json:"-"`
-}
-
-type BookTransaction struct {
-	ID int `json:"id"`
-}
-
-type UserTransaction struct {
-	ID int `json:"id"`
-}
-
-func (UserTransaction) TableName() string {
-	return "transactions"
+	Id         int              `json:"id" gorm:"primary_key:auto_increment"`
+	CounterQty int              `json:"qty" form:"qty" gorm:"type: int"`
+	UserId     int              `json:"user_id"`
+	User       UserResponse     `json:"user"`
+	Cart       []Cart           `json:"cart"`
+	BookId     int              `json:"book_id"`
+	Book       BookCartResponse `json:"book"`
+	Attachment string           `json:"attachment"`
+	Total      int              `json:"total"`
+	Status     string           `json:"status"`
 }

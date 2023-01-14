@@ -1,4 +1,4 @@
-package booksdto
+package bookdto
 
 type CreateBookRequest struct {
 	Title           string `json:"title" form:"title" gorm:"type: varchar(255)"`
@@ -10,19 +10,10 @@ type CreateBookRequest struct {
 	Description     string `json:"description" form:"description" gorm:"type: text"`
 	BookAttachment  string `json:"book_attachment" form:"book_attachment"`
 	Thumbnail       string `json:"thumbnail" form:"thumbnail"`
+	Quota           int    `json:"quota" form:"quota"`
 }
 
 type UpdateBookRequest struct {
-	Title              string `json:"title" gorm:"type: varchar(255)"`
-	PublicationDate    string `json:"publication_date"`
-	ISBN               int    `json:"isbn"`
-	Pages              int    `json:"pages"`
-	Author             string `json:"author"`
-	Price              int    `json:"price"`
-	IsPromo            bool   `json:"is_promo"`
-	Discount           int    `json:"discount"`
-	PriceAfterDiscount int    `json:"price_after_discount"`
-	Description        string `json:"description" gorm:"type: text"`
-	BookAttachment     string `json:"book_attachment"`
-	Thumbnail          string `json:"thumbnail"`
+	Id       string `json:"id"`
+	Discount string `json:"discount"`
 }

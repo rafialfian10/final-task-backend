@@ -16,8 +16,7 @@ type Book struct {
 	Description        string    `json:"description" gorm:"type: text"`
 	BookAttachment     string    `json:"book_attachment"`
 	Thumbnail          string    `json:"thumbnail"`
-	UserId             int       `json:"user_id"`
-	User               User      `json:"user"`
+	Quota              int       `json:"quota" form:"quota" gorm:"type: int"`
 }
 
 type BookCartResponse struct {
@@ -34,6 +33,7 @@ type BookCartResponse struct {
 	Description        string    `json:"description" gorm:"type: text"`
 	BookAttachment     string    `json:"book_attachment"`
 	Thumbnail          string    `json:"thumbnail"`
+	Quota              int       `json:"quota" form:"quota" gorm:"type: int"`
 }
 
 func (BookCartResponse) TableName() string {

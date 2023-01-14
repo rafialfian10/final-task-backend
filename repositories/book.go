@@ -21,14 +21,14 @@ func RepositoryBook(db *gorm.DB) *repository {
 
 func (r *repository) FindBooks() ([]models.Book, error) {
 	var books []models.Book
-	err := r.db.Debug().Preload("User").Find(&books).Error
+	err := r.db.Debug().Find(&books).Error
 
 	return books, err
 }
 
 func (r *repository) GetBook(Id int) (models.Book, error) {
 	var book models.Book
-	err := r.db.Debug().Preload("User").First(&book, "id=?", Id).Error
+	err := r.db.Debug().First(&book, "id=?", Id).Error
 
 	return book, err
 }

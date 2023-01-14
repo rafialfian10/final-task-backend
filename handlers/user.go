@@ -1,20 +1,22 @@
 package handlers
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"os"
 	"strconv"
 	dto "waysbook/dto/result"
 	usersdto "waysbook/dto/users"
 	"waysbook/models"
 	"waysbook/repositories"
 
+	"github.com/cloudinary/cloudinary-go/v2"
+	"github.com/cloudinary/cloudinary-go/v2/api/uploader"
 	"github.com/go-playground/validator/v10"
 	"github.com/gorilla/mux"
 )
-
-var path_file_user = "http://localhost:5000/uploads/"
 
 type handlerUser struct {
 	UserRepository repositories.UserRepository
@@ -31,10 +33,6 @@ func (h *handlerUser) FindUsers(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		json.NewEncoder(w).Encode(err.Error())
-	}
-
-	for i, data := range users {
-		users[i].Image = path_file_user + data.Image
 	}
 
 	w.WriteHeader(http.StatusOK)
@@ -54,8 +52,6 @@ func (h *handlerUser) GetUser(w http.ResponseWriter, r *http.Request) {
 		json.NewEncoder(w).Encode(response)
 		return
 	}
-
-	user.Image = path_file_user + user.Image
 
 	w.WriteHeader(http.StatusOK)
 	response := dto.SuccessResult{Code: http.StatusOK, Data: user}
@@ -118,17 +114,25 @@ func (h *handlerUser) UpdateUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err != nil {
-		fmt.Println(err.Error())
-	}
-
 	// middleware
 	dataContex := r.Context().Value("dataFile")
-	filename := dataContex.(string)
+	filepath := dataContex.(string)
 
-	// request image agar nantinya image dapat diupdate
-	request := usersdto.UpdateUserRequest{
-		Image: filename,
+	// cloudinary
+	var ctx = context.Background()
+	var CLOUD_NAME = os.Getenv("CLOUD_NAME")
+	var API_KEY = os.Getenv("API_KEY")
+	var API_SECRET = os.Getenv("API_SECRET")
+
+	// tambah credential..
+	cld, _ := cloudinary.NewFromParams(CLOUD_NAME, API_KEY, API_SECRET)
+
+	// Upload file to Cloudinary ...
+	resp, err := cld.Upload.Upload(ctx, filepath, uploader.UploadParams{Folder: "dewetour"})
+	fmt.Println(resp.SecureURL)
+
+	if err != nil {
+		fmt.Println(err.Error())
 	}
 
 	// name
@@ -157,8 +161,8 @@ func (h *handlerUser) UpdateUser(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// image
-	if request.Image != "" {
-		user.Image = request.Image
+	if resp.SecureURL != "" {
+		user.Image = resp.SecureURL
 	}
 
 	// panggil function UpdateTrip didalam handlerTrip untuk update semua data trip lalu tampung ke var new trip

@@ -10,9 +10,6 @@ type User struct {
 	Image    string `json:"image"`
 	Address  string `json:"address" gorm:"type: text"`
 	Role     string `json:"role" gorm:"type: varchar(255)"`
-	Books    []Book `json:"books"`
-	// Carts        []Cart        `json:"carts"`
-	// Transactions []Transaction `json:"transactions"`
 }
 
 type UserResponse struct {
