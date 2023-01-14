@@ -68,9 +68,10 @@ func (h *handlerCart) CreateCart(w http.ResponseWriter, r *http.Request) {
 		transId := int(time.Now().Unix())
 
 		transaction := models.Transaction{
-			Id:     transId,
-			UserId: userId,
-			Status: "waiting",
+			Id:       transId,
+			UserId:   userId,
+			Status:   "waiting",
+			CreateAt: time.Now(),
 		}
 
 		createTrans, err := h.CartRepository.CreateTransaction(transaction)
@@ -85,6 +86,7 @@ func (h *handlerCart) CreateCart(w http.ResponseWriter, r *http.Request) {
 			BookId:        request.BookId,
 			TransactionId: int(createTrans.Id),
 			Total:         book.Price,
+			CreateAt:      time.Now(),
 		}
 
 		cart, err := h.CartRepository.CreateCart(dataCart)
@@ -105,6 +107,7 @@ func (h *handlerCart) CreateCart(w http.ResponseWriter, r *http.Request) {
 			BookId:        request.BookId,
 			TransactionId: int(transaction.Id),
 			Total:         book.Price,
+			CreateAt:      time.Now(),
 		}
 
 		cart, err := h.CartRepository.CreateCart(dataCart)
@@ -154,9 +157,9 @@ func (h *handlerCart) GetCartByTransID(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 
 	userInfo := r.Context().Value("userInfo").(jwt.MapClaims)
-	userID := int64(userInfo["id"].(float64))
+	userId := int64(userInfo["id"].(float64))
 
-	transaction, _ := h.CartRepository.GetTransactionID(int(userID))
+	transaction, _ := h.CartRepository.GetTransactionID(int(userId))
 
 	cart, err := h.CartRepository.GetCartByTransID(int(transaction.Id))
 
