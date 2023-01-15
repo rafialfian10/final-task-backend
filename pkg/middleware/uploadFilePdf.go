@@ -52,9 +52,9 @@ func UploadFilePdf(next http.HandlerFunc) http.HandlerFunc {
 		tempFile.Write(fileBytes)
 
 		data := tempFile.Name()
-		filepdf := data[8:]
+		// filepdf := data[8:]
 
-		ctx := context.WithValue(r.Context(), "dataPDF", filepdf)
+		ctx := context.WithValue(r.Context(), "dataPDF", data)
 		next.ServeHTTP(w, r.WithContext(ctx))
 	})
 }

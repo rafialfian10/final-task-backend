@@ -134,10 +134,10 @@ func (h *handlerBook) CreateBook(w http.ResponseWriter, r *http.Request) {
 
 	// Add your Cloudinary credentials ...
 	cld, _ := cloudinary.NewFromParams(CLOUD_NAME, API_KEY, API_SECRET)
+	cld1, _ := cloudinary.NewFromParams(CLOUD_NAME, API_KEY, API_SECRET)
 
-	// Upload file to Cloudinary ...
 	resp, err := cld.Upload.Upload(ctx, filepath, uploader.UploadParams{Folder: "waysbook"})
-	resp1, err := cld.Upload.Upload(ctx, filePDF, uploader.UploadParams{Folder: "waysbook"})
+	resp1, err := cld1.Upload.Upload(ctx, filePDF, uploader.UploadParams{Folder: "waysbook"})
 
 	if err != nil {
 		fmt.Println(err.Error())
