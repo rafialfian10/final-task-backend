@@ -17,8 +17,6 @@ type Book struct {
 	BookAttachment     string    `json:"book_attachment" gorm:"type: varchar(255)"`
 	Thumbnail          string    `json:"thumbnail" gorm:"type: varchar(255)"`
 	Quota              int       `json:"quota" form:"quota" gorm:"type: int"`
-	CreateAt           time.Time `json:"-"`
-	UpdateAt           time.Time `json:"-"`
 }
 
 type BookCartResponse struct {
