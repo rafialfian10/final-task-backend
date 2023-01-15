@@ -19,7 +19,7 @@ import (
 	"github.com/gorilla/mux"
 )
 
-var path_file = "http://localhost:4000/uploads/"
+// var path_file = "http://localhost:4000/uploads/"
 
 type handlerBook struct {
 	BookRepository repositories.BookRepository
@@ -137,6 +137,7 @@ func (h *handlerBook) CreateBook(w http.ResponseWriter, r *http.Request) {
 
 	// Upload file to Cloudinary ...
 	resp, err := cld.Upload.Upload(ctx, filepath, uploader.UploadParams{Folder: "waysbook"})
+	resp1, err := cld.Upload.Upload(ctx, filePDF, uploader.UploadParams{Folder: "waysbook"})
 
 	if err != nil {
 		fmt.Println(err.Error())
@@ -156,7 +157,7 @@ func (h *handlerBook) CreateBook(w http.ResponseWriter, r *http.Request) {
 		IsPromo:            false,
 		Discount:           0,
 		PriceAfterDiscount: 0,
-		BookAttachment:     filePDF,
+		BookAttachment:     resp1.SecureURL,
 		Thumbnail:          resp.SecureURL,
 	}
 
