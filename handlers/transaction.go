@@ -221,7 +221,7 @@ func SendEmail(status string, transaction models.Transaction) {
 		<li>Iklan : %s</li>
       </ul>
       </body>
-    </html>`, BookName, price, status, "Sabun Mandi"))
+    </html>`, BookName, price, status, "Sabun"))
 
 	dialer := gomail.NewDialer(
 		CONFIG_SMTP_HOST,

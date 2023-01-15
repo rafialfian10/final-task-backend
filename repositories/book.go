@@ -9,6 +9,7 @@ import (
 type BookRepository interface {
 	FindBooks() ([]models.Book, error)
 	GetBook(ID int) (models.Book, error)
+	FindBookPromo() ([]models.Book, error)
 	CreateBook(book models.Book) (models.Book, error)
 	UpdateBook(Id int, discount int) (models.Book, error)
 	DeleteBook(book models.Book) (models.Book, error)
@@ -23,6 +24,12 @@ func (r *repository) FindBooks() ([]models.Book, error) {
 	var books []models.Book
 	err := r.db.Debug().Find(&books).Error
 
+	return books, err
+}
+
+func (r *repository) FindBookPromo() ([]models.Book, error) {
+	var books []models.Book
+	err := r.db.Where("is_promo= ?", true).Find(&books).Error
 	return books, err
 }
 

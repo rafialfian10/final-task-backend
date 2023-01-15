@@ -49,6 +49,24 @@ func (h *handlerBook) FindBooks(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(response)
 }
 
+// function get all book promo
+func (h *handlerBook) FindBookPromo(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+
+	books, err := h.BookRepository.FindBookPromo()
+
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		response := dto.ErrorResult{Code: http.StatusBadRequest, Message: err.Error()}
+		json.NewEncoder(w).Encode(response)
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
+	response := dto.SuccessResult{Code: http.StatusOK, Data: books}
+	json.NewEncoder(w).Encode(response)
+}
+
 // function get book by id
 func (h *handlerBook) GetBook(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
@@ -75,8 +93,8 @@ func (h *handlerBook) CreateBook(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 
 	// get pdf name for book attachment
-	dataPdfContext := r.Context().Value("dataPdf")
-	pdfName := dataPdfContext.(string)
+	dataPDF := r.Context().Value("dataPDF")
+	filePDF := dataPDF.(string)
 
 	// get image name for thumbnail
 	dataImageContex := r.Context().Value("dataFile")
@@ -138,7 +156,7 @@ func (h *handlerBook) CreateBook(w http.ResponseWriter, r *http.Request) {
 		IsPromo:            false,
 		Discount:           0,
 		PriceAfterDiscount: 0,
-		BookAttachment:     path_file + pdfName,
+		BookAttachment:     filePDF,
 		Thumbnail:          resp.SecureURL,
 	}
 
