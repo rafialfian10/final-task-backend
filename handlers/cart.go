@@ -113,7 +113,7 @@ func (h *handlerCart) CreateCart(w http.ResponseWriter, r *http.Request) {
 		cart, err := h.CartRepository.CreateCart(dataCart)
 		if err != nil {
 			w.WriteHeader(http.StatusBadRequest)
-			response := dto.ErrorResult{Code: http.StatusBadRequest, Message: "Cart Failed!"}
+			response := dto.ErrorResult{Code: http.StatusBadRequest, Message: "Cart Failled!"}
 			json.NewEncoder(w).Encode(response)
 			return
 		}
