@@ -1,7 +1,5 @@
 package models
 
-import "time"
-
 type Transaction struct {
 	Id         int          `json:"id" gorm:"primary_key:auto_increment"`
 	CounterQty int          `json:"qty" form:"qty" gorm:"type: int"`
@@ -10,6 +8,4 @@ type Transaction struct {
 	Cart       []Cart       `json:"cart"`
 	Total      int          `json:"total"`
 	Status     string       `json:"status"`
-	CreateAt   time.Time    `json:"-"`
-	UpdateAt   time.Time    `json:"-"`
 }
