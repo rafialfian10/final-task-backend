@@ -9,7 +9,6 @@ type TransactionResponse struct {
 	User       models.UserResponse     `json:"user"`
 	BookId     int                     `json:"-"`
 	Book       models.BookCartResponse `json:"book_purchased"`
-	// Attachment string                  `json:"attachment"`
-	Total  int    `json:"total"`
-	Status string `json:"status"`
+	Total      int                     `json:"total"`
+	Status     string                  `json:"status"`
 }

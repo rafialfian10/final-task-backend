@@ -58,7 +58,7 @@ func (h *handlerCart) CreateCart(w http.ResponseWriter, r *http.Request) {
 	book, err := h.CartRepository.GetBookCart(request.BookId)
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
-		response := dto.ErrorResult{Code: http.StatusBadRequest, Message: "Book Not Found!"}
+		response := dto.ErrorResult{Code: http.StatusBadRequest, Message: err.Error()}
 		json.NewEncoder(w).Encode(response)
 		return
 	}
@@ -77,7 +77,7 @@ func (h *handlerCart) CreateCart(w http.ResponseWriter, r *http.Request) {
 		createTrans, err := h.CartRepository.CreateTransaction(transaction)
 		if err != nil {
 			w.WriteHeader(http.StatusBadRequest)
-			response := dto.ErrorResult{Code: http.StatusBadRequest, Message: "Cart Failed!"}
+			response := dto.ErrorResult{Code: http.StatusBadRequest, Message: err.Error()}
 			json.NewEncoder(w).Encode(response)
 			return
 		}
@@ -92,7 +92,7 @@ func (h *handlerCart) CreateCart(w http.ResponseWriter, r *http.Request) {
 		cart, err := h.CartRepository.CreateCart(dataCart)
 		if err != nil {
 			w.WriteHeader(http.StatusBadRequest)
-			response := dto.ErrorResult{Code: http.StatusBadRequest, Message: "Cart Failed!"}
+			response := dto.ErrorResult{Code: http.StatusBadRequest, Message: err.Error()}
 			json.NewEncoder(w).Encode(response)
 			return
 		}
@@ -113,7 +113,7 @@ func (h *handlerCart) CreateCart(w http.ResponseWriter, r *http.Request) {
 		cart, err := h.CartRepository.CreateCart(dataCart)
 		if err != nil {
 			w.WriteHeader(http.StatusBadRequest)
-			response := dto.ErrorResult{Code: http.StatusBadRequest, Message: "Cart Failled Cok!"}
+			response := dto.ErrorResult{Code: http.StatusBadRequest, Message: err.Error()}
 			json.NewEncoder(w).Encode(response)
 			return
 		}
