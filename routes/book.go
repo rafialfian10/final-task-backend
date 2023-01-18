@@ -18,6 +18,6 @@ func BookRoutes(r *mux.Router) {
 	r.HandleFunc("/book/{id}", h.GetBook).Methods("GET")
 	r.HandleFunc("/book", middleware.AuthAdmin(middleware.UploadFilePdf(middleware.UploadFileImage(h.CreateBook)))).Methods("POST")
 	r.HandleFunc("/book-promo/{id}", middleware.AuthAdmin(h.UpdateBookPromo)).Methods("PATCH")
-	r.HandleFunc("/book/{id}", middleware.AuthAdmin(h.UpdateBook)).Methods("PATCH")
+	r.HandleFunc("/book/{id}", middleware.AuthAdmin(middleware.UploadFilePdf(middleware.UploadFileImage(h.UpdateBook)))).Methods("PATCH")
 	r.HandleFunc("/book/{id}", middleware.AuthAdmin(h.DeleteBook)).Methods("DELETE")
 }

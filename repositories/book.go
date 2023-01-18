@@ -48,7 +48,8 @@ func (r *repository) CreateBook(book models.Book) (models.Book, error) {
 }
 
 func (r *repository) UpdateBook(book models.Book) (models.Book, error) {
-	err := r.db.Save(&book).Error
+	err := r.db.Debug().Model(&book).Updates(book).Error
+
 	return book, err
 }
 

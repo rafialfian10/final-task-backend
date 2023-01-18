@@ -55,3 +55,12 @@ func main() {
 	fmt.Println("Your server at http://localhost:5000")
 	http.ListenAndServe(":"+PORT, handlers.CORS(allowedHeaders, allowedMethods, allowedOrigins)(r))
 }
+
+// PORT=5000
+// SERVER_KEY=SB-Mid-server-CBYg0a0CWSxQrUrIYbcaHJvM
+// CLIENT_KEY=SB-Mid-client-xBHWdiuU4aVE9vOq
+// SYSTEM_EMAIL=rafialfian770@gmail.com
+// SYSTEM_PASSWORD=ffcjtorkjkynndrk
+// CLOUD_NAME=dixxnrj9b
+// API_KEY=899448373737227
+// API_SECRET=uls7g_goNxDCJEqEYyLmkG1XC-g
