@@ -13,7 +13,7 @@ import (
 func UploadFileImage(next http.HandlerFunc) http.HandlerFunc {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 
-		file, _, err := r.FormFile("image")
+		file, _, err := r.FormFile("thumbnail")
 
 		if err != nil {
 			fmt.Println(err)

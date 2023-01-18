@@ -11,7 +11,7 @@ import (
 
 func UploadFilePdf(next http.HandlerFunc) http.HandlerFunc {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		file, _, err := r.FormFile("document")
+		file, _, err := r.FormFile("book")
 
 		if err != nil && r.Method == "PATCH" {
 			ctx := context.WithValue(r.Context(), "dataPDF", "false")

@@ -11,3 +11,6 @@ type Cart struct {
 	Total         int         `json:"total"`
 	CreateAt      time.Time   `json:"-"`
 }
+
+// constraint digunakan untuk membatasi jenis data yang dapat masuk ke tabel
+// fungsi onUpdate Ondelete cascade adalah sebuah fitur yang diberikan untuk sebuah tabel yang berelasi  yang memungkinkan untuk menghapus / update data pada tabel anak apabila data pada tabel parent terhapus /update

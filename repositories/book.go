@@ -11,9 +11,10 @@ type BookRepository interface {
 	GetBook(ID int) (models.Book, error)
 	FindBookPromo() ([]models.Book, error)
 	CreateBook(book models.Book) (models.Book, error)
-	UpdateBook(Id int, discount int) (models.Book, error)
-	DeleteBook(book models.Book) (models.Book, error)
+	UpdateBook(book models.Book) (models.Book, error)
+	UpdateBookPromo(Id int, discount int) (models.Book, error)
 	GetBooksByPromo() ([]models.Book, error)
+	DeleteBook(book models.Book) (models.Book, error)
 }
 
 func RepositoryBook(db *gorm.DB) *repository {
@@ -46,7 +47,12 @@ func (r *repository) CreateBook(book models.Book) (models.Book, error) {
 	return book, err
 }
 
-func (r *repository) UpdateBook(Id int, discount int) (models.Book, error) {
+func (r *repository) UpdateBook(book models.Book) (models.Book, error) {
+	err := r.db.Save(&book).Error
+	return book, err
+}
+
+func (r *repository) UpdateBookPromo(Id int, discount int) (models.Book, error) {
 	var book models.Book
 	r.db.First(&book, "id=?", Id)
 
@@ -61,16 +67,16 @@ func (r *repository) UpdateBook(Id int, discount int) (models.Book, error) {
 	return book, err
 }
 
-func (r *repository) DeleteBook(book models.Book) (models.Book, error) {
-	err := r.db.Debug().Delete(&book).Error
-
-	return book, err
-}
-
 func (r *repository) GetBooksByPromo() ([]models.Book, error) {
 	var books []models.Book
 
 	err := r.db.Preload("User").Find(&books, "is_promo=?", true).Error
 
 	return books, err
+}
+
+func (r *repository) DeleteBook(book models.Book) (models.Book, error) {
+	err := r.db.Debug().Delete(&book).Error
+
+	return book, err
 }

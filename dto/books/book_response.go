@@ -12,7 +12,7 @@ type BookResponse struct {
 	Discount           int    `json:"discount"`
 	PriceAfterDiscount int    `json:"price_after_discount"`
 	Description        string `json:"description" gorm:"type: text"`
-	BookAttachment     string `json:"book_attachment"`
+	BookAttachment     string `json:"book"`
 	Thumbnail          string `json:"thumbnail"`
 	Quota              int    `json:"quota" form:"quota"`
 }

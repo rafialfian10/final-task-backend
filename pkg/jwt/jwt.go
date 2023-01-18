@@ -50,3 +50,5 @@ func DecodeToken(tokenString string) (jwt.MapClaims, error) {
 }
 
 // function DecodeToken berfungsi ketika request masuk, middleware akan mengecek apakah ada auth?, jika ada maka token akan diambil lalu dikirim ke fungsi decodeToken didalam decode token. lalu token akan diperiksa menggunakan function verifyToken, apabila token valid maka function decodeToken akan mengambil data yang disisipkan kedalam token
+
+// Server akan melakukan generate token yang mensertifikasi identitas user, dan mengirimkannya ke klien. Klien akan mengirim token kembali ke server

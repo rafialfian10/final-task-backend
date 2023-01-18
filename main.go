@@ -36,15 +36,16 @@ func main() {
 	r.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusOK)
-		json.NewEncoder(w).Encode("Congrats! Your Dumbass API is now setup!")
+		json.NewEncoder(w).Encode("Congrats! Your API is now setup!")
 	})
 
+	// pathPrefix untuk membuat route baru. Subrouter untuk menguji route pada pathPrefix.
 	routes.RouteInit(r.PathPrefix("/api/v1").Subrouter())
 
-	// path file
+	// route untuk menginisialisasi folder dengan file, image css, js agar dapat diakses kedalam project
 	r.PathPrefix("/uploads").Handler(http.StripPrefix("/uploads/", http.FileServer(http.Dir("./uploads"))))
 
-	// Config CORS
+	// Config CORS (fitur yang berfungsi untuk memberikan akses dari frontend)
 	var allowedHeaders = handlers.AllowedHeaders([]string{"X-Requested-With", "Content-Type", "Authorization"})
 	var allowedMethods = handlers.AllowedMethods([]string{"GET", "POST", "PATCH", "DELETE", "PUT", "HEAD"})
 	var allowedOrigins = handlers.AllowedOrigins([]string{"*"})
