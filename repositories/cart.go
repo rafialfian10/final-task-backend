@@ -7,54 +7,47 @@ import (
 )
 
 type CartRepository interface {
-	GetCart(ID int) (models.Cart, error)
-	GetCartByTransID(TransactionID int) ([]models.Cart, error)
-	CreateCart(cart models.Cart) (models.Cart, error)
+	FindCarts(UserId int) ([]models.Cart, error)
+	GetCart(Id int) (models.Cart, error)
+	GetCartByBook(BookId int, UserId int) (models.Cart, error)
+	CreateCart(newOrder models.Cart) (models.Cart, error)
+	UpdateCart(cart models.Cart) (models.Cart, error)
 	DeleteCart(cart models.Cart) (models.Cart, error)
-	GetBookCart(ID int) (models.Book, error)
-	GetTransactionID(ID int) (models.Transaction, error)
-	CreateTransaction(transaction models.Transaction) (models.Transaction, error)
 }
 
 func RepositoryCart(db *gorm.DB) *repository {
 	return &repository{db}
 }
 
-func (r *repository) GetCart(ID int) (models.Cart, error) {
-	var cart models.Cart
-	err := r.db.Preload("Book").First(&cart, ID).Error
-	return cart, err
-}
-
-func (r *repository) GetCartByTransID(TransactionID int) ([]models.Cart, error) {
+func (r *repository) FindCarts(UserId int) ([]models.Cart, error) {
 	var cart []models.Cart
-	err := r.db.Preload("Book").Find(&cart, "transaction_id = ?", TransactionID).Error
+	err := r.db.Preload("Book").Where("user_id = ?", UserId).Where("transaction_id IS NULL").Find(&cart).Error
 	return cart, err
 }
 
-func (r *repository) CreateCart(cart models.Cart) (models.Cart, error) {
-	err := r.db.Create(&cart).Error
+func (r *repository) GetCart(Id int) (models.Cart, error) {
+	var cart models.Cart
+	err := r.db.Preload("Book").Where("transaction_id IS NULL").First(&cart, "id = ?", Id).Error
+	return cart, err
+}
+
+func (r *repository) GetCartByBook(bookId int, userId int) (models.Cart, error) {
+	var cart models.Cart
+	err := r.db.Preload("Book").Where("user_id = ?", userId).Where("transaction_id IS NULL").First(&cart, "product_id = ?", bookId).Error
+	return cart, err
+}
+
+func (r *repository) CreateCart(newCart models.Cart) (models.Cart, error) {
+	err := r.db.Select("BookId", "OrderQty", "UserId").Create(&newCart).Error
+	return newCart, err
+}
+
+func (r *repository) UpdateCart(cart models.Cart) (models.Cart, error) {
+	err := r.db.Model(&cart).Updates(cart).Error
 	return cart, err
 }
 
 func (r *repository) DeleteCart(cart models.Cart) (models.Cart, error) {
 	err := r.db.Delete(&cart).Error
 	return cart, err
-}
-
-func (r *repository) GetBookCart(ID int) (models.Book, error) {
-	var book models.Book
-	err := r.db.First(&book, ID).Error
-	return book, err
-}
-
-func (r *repository) GetTransactionID(userID int) (models.Transaction, error) {
-	var transaction models.Transaction
-	err := r.db.Find(&transaction, "status = ? AND user_id = ?", "waiting", userID).Error
-	return transaction, err
-}
-
-func (r *repository) CreateTransaction(transaction models.Transaction) (models.Transaction, error) {
-	err := r.db.Preload("User").Create(&transaction).Error
-	return transaction, err
 }

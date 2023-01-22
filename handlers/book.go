@@ -172,16 +172,16 @@ func (h *handlerBook) CreateBook(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// bookResponse, err := h.BookRepository.GetBook(dataBook.Id)
-	// if err != nil {
-	// 	w.WriteHeader(http.StatusBadRequest)
-	// 	response := dto.ErrorResult{Code: http.StatusBadRequest, Message: err.Error()}
-	// 	json.NewEncoder(w).Encode(response)
-	// 	return
-	// }
+	bookResponse, err := h.BookRepository.GetBook(dataBook.Id)
+	if err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		response := dto.ErrorResult{Code: http.StatusBadRequest, Message: err.Error()}
+		json.NewEncoder(w).Encode(response)
+		return
+	}
 
 	w.WriteHeader(http.StatusOK)
-	response := dto.SuccessResult{Code: http.StatusOK, Data: dataBook}
+	response := dto.SuccessResult{Code: http.StatusOK, Data: bookResponse}
 	json.NewEncoder(w).Encode(response)
 }
 

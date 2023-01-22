@@ -103,10 +103,8 @@ func (h *handlerUser) UpdateUser(w http.ResponseWriter, r *http.Request) {
 
 	id, _ := strconv.Atoi(mux.Vars(r)["id"])
 
-	// panggil function GetTrip didalam handlerTrip dengan index tertentu
 	user, err := h.UserRepository.GetUser(int(id))
 
-	// jika ada error maka panggil ErrorResult
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
 		response := dto.ErrorResult{Code: http.StatusBadRequest, Message: err.Error()}
@@ -124,11 +122,10 @@ func (h *handlerUser) UpdateUser(w http.ResponseWriter, r *http.Request) {
 	var API_KEY = os.Getenv("API_KEY")
 	var API_SECRET = os.Getenv("API_SECRET")
 
-	// tambah credential..
 	cld, _ := cloudinary.NewFromParams(CLOUD_NAME, API_KEY, API_SECRET)
 
 	// Upload file to Cloudinary ...
-	resp, err := cld.Upload.Upload(ctx, filepath, uploader.UploadParams{Folder: "dewetour"})
+	resp, err := cld.Upload.Upload(ctx, filepath, uploader.UploadParams{Folder: "waysbook"})
 	fmt.Println(resp.SecureURL)
 
 	if err != nil {
@@ -162,13 +159,11 @@ func (h *handlerUser) UpdateUser(w http.ResponseWriter, r *http.Request) {
 
 	// image
 	if resp.SecureURL != "" {
-		user.Image = resp.SecureURL
+		user.Thumbnail = resp.SecureURL
 	}
 
-	// panggil function UpdateTrip didalam handlerTrip untuk update semua data trip lalu tampung ke var new trip
 	newUser, err := h.UserRepository.UpdateUser(user)
 
-	// jika ada error maka tampilkan ErrorResult
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		response := dto.ErrorResult{Code: http.StatusInternalServerError, Message: err.Error()}
@@ -176,7 +171,6 @@ func (h *handlerUser) UpdateUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// panggil function getTrip agar setelah data di create data id akan keluar response
 	newUserResponse, err := h.UserRepository.GetUser(newUser.Id)
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
@@ -222,9 +216,9 @@ func convertResponseUser(u models.User) usersdto.UserResponse {
 		Name:  u.Name,
 		Email: u.Email,
 		// Password: u.Password,
-		Gender:  u.Gender,
-		Phone:   u.Phone,
-		Address: u.Address,
-		Image:   u.Image,
+		Gender:    u.Gender,
+		Phone:     u.Phone,
+		Address:   u.Address,
+		Thumbnail: u.Thumbnail,
 	}
 }
