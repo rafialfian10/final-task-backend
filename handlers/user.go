@@ -15,6 +15,7 @@ import (
 	"github.com/cloudinary/cloudinary-go/v2"
 	"github.com/cloudinary/cloudinary-go/v2/api/uploader"
 	"github.com/go-playground/validator/v10"
+	"github.com/golang-jwt/jwt/v4"
 	"github.com/gorilla/mux"
 )
 
@@ -43,19 +44,27 @@ func (h *handlerUser) FindUsers(w http.ResponseWriter, r *http.Request) {
 func (h *handlerUser) GetUser(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 
-	id, _ := strconv.Atoi(mux.Vars(r)["id"])
+	userInfo := r.Context().Value("userInfo").(jwt.MapClaims)
+	idUser := int(userInfo["id"].(float64))
 
-	user, err := h.UserRepository.GetUser(id)
+	user, err := h.UserRepository.GetUser(idUser)
 	if err != nil {
-		w.WriteHeader(http.StatusBadRequest)
-		response := dto.ErrorResult{Code: http.StatusBadRequest, Message: err.Error()}
+		w.WriteHeader(http.StatusNotFound)
+		response := dto.ErrorResult{
+			Code:    http.StatusBadRequest,
+			Message: err.Error(),
+		}
 		json.NewEncoder(w).Encode(response)
 		return
 	}
 
 	w.WriteHeader(http.StatusOK)
-	response := dto.SuccessResult{Code: http.StatusOK, Data: user}
+	response := dto.SuccessResult{
+		Code: http.StatusOK,
+		Data: convertResponseUser(user),
+	}
 	json.NewEncoder(w).Encode(response)
+
 }
 
 func (h *handlerUser) CreateUser(w http.ResponseWriter, r *http.Request) {
@@ -212,10 +221,9 @@ func (h *handlerUser) DeleteUser(w http.ResponseWriter, r *http.Request) {
 
 func convertResponseUser(u models.User) usersdto.UserResponse {
 	return usersdto.UserResponse{
-		Id:    u.Id,
-		Name:  u.Name,
-		Email: u.Email,
-		// Password: u.Password,
+		Id:        u.Id,
+		Name:      u.Name,
+		Email:     u.Email,
 		Gender:    u.Gender,
 		Phone:     u.Phone,
 		Address:   u.Address,
