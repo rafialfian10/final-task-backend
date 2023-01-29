@@ -14,7 +14,6 @@ import (
 
 	"github.com/cloudinary/cloudinary-go/v2"
 	"github.com/cloudinary/cloudinary-go/v2/api/uploader"
-	"github.com/go-playground/validator/v10"
 	"github.com/golang-jwt/jwt/v4"
 	"github.com/gorilla/mux"
 )
@@ -45,9 +44,9 @@ func (h *handlerUser) GetUser(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 
 	userInfo := r.Context().Value("userInfo").(jwt.MapClaims)
-	idUser := int(userInfo["id"].(float64))
+	userId := int(userInfo["id"].(float64))
 
-	user, err := h.UserRepository.GetUser(idUser)
+	user, err := h.UserRepository.GetUser(userId)
 	if err != nil {
 		w.WriteHeader(http.StatusNotFound)
 		response := dto.ErrorResult{
@@ -67,45 +66,45 @@ func (h *handlerUser) GetUser(w http.ResponseWriter, r *http.Request) {
 
 }
 
-func (h *handlerUser) CreateUser(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "application/json")
+// func (h *handlerUser) CreateUser(w http.ResponseWriter, r *http.Request) {
+// 	w.Header().Set("Content-Type", "application/json")
 
-	request := new(usersdto.CreateUserRequest)
-	if err := json.NewDecoder(r.Body).Decode(&request); err != nil {
-		w.WriteHeader(http.StatusBadRequest)
-		response := dto.ErrorResult{Code: http.StatusBadRequest, Message: err.Error()}
-		json.NewEncoder(w).Encode(response)
-		return
-	}
+// 	request := new(usersdto.CreateUserRequest)
+// 	if err := json.NewDecoder(r.Body).Decode(&request); err != nil {
+// 		w.WriteHeader(http.StatusBadRequest)
+// 		response := dto.ErrorResult{Code: http.StatusBadRequest, Message: err.Error()}
+// 		json.NewEncoder(w).Encode(response)
+// 		return
+// 	}
 
-	validation := validator.New()
-	err := validation.Struct(request)
-	if err != nil {
-		w.WriteHeader(http.StatusBadRequest)
-		response := dto.ErrorResult{Code: http.StatusBadRequest, Message: err.Error()}
-		json.NewEncoder(w).Encode(response)
-		return
-	}
+// 	validation := validator.New()
+// 	err := validation.Struct(request)
+// 	if err != nil {
+// 		w.WriteHeader(http.StatusBadRequest)
+// 		response := dto.ErrorResult{Code: http.StatusBadRequest, Message: err.Error()}
+// 		json.NewEncoder(w).Encode(response)
+// 		return
+// 	}
 
-	user := models.User{
-		Name:     request.Name,
-		Email:    request.Email,
-		Password: request.Password,
-		Phone:    request.Phone,
-		Address:  request.Address,
-	}
+// 	user := models.User{
+// 		Name:     request.Name,
+// 		Email:    request.Email,
+// 		Password: request.Password,
+// 		Phone:    request.Phone,
+// 		Address:  request.Address,
+// 	}
 
-	data, err := h.UserRepository.CreateUser(user)
-	if err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
-		response := dto.ErrorResult{Code: http.StatusInternalServerError, Message: err.Error()}
-		json.NewEncoder(w).Encode(response)
-	}
+// 	data, err := h.UserRepository.CreateUser(user)
+// 	if err != nil {
+// 		w.WriteHeader(http.StatusInternalServerError)
+// 		response := dto.ErrorResult{Code: http.StatusInternalServerError, Message: err.Error()}
+// 		json.NewEncoder(w).Encode(response)
+// 	}
 
-	w.WriteHeader(http.StatusOK)
-	response := dto.SuccessResult{Code: http.StatusOK, Data: convertResponseUser(data)}
-	json.NewEncoder(w).Encode(response)
-}
+// 	w.WriteHeader(http.StatusOK)
+// 	response := dto.SuccessResult{Code: http.StatusOK, Data: convertResponseUser(data)}
+// 	json.NewEncoder(w).Encode(response)
+// }
 
 func (h *handlerUser) UpdateUser(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
