@@ -1,14 +1,13 @@
 package handlers
 
 import (
-	"bytes"
+	"crypto/tls"
 	"encoding/json"
 	"fmt"
 	"log"
 	"net/http"
 	"os"
 	"strconv"
-	"text/template"
 	"time"
 	_ "time/tzdata"
 	dto "waysbook/dto/result"
@@ -19,7 +18,6 @@ import (
 	"github.com/go-playground/validator/v10"
 	"github.com/golang-jwt/jwt/v4"
 	"github.com/gorilla/mux"
-	"github.com/leekchan/accounting"
 	"github.com/midtrans/midtrans-go"
 	"github.com/midtrans/midtrans-go/snap"
 	"gopkg.in/gomail.v2"
@@ -429,68 +427,121 @@ func convertTransactionResponse(transaction models.Transaction) transactiondto.T
 
 // fungsi untuk kirim email transaksi
 func SendTransactionMail(status string, transaction models.Transaction) {
+	var CONFIG_SMTP_HOST = "smtp.gmail.com"
+	var CONFIG_SMTP_PORT = 587
+	var CONFIG_SENDER_NAME = "WAYSBOOK <rafialfian770@gmail.com>"
+	var CONFIG_AUTH_EMAIL = os.Getenv("SYSTEM_EMAIL")
+	var CONFIG_AUTH_PASSWORD = os.Getenv("SYSTEM_PASSWORD")
 
-	var CONFIG_SMTP_HOST = os.Getenv("CONFIG_SMTP_HOST")
-	var CONFIG_SMTP_PORT, _ = strconv.Atoi(os.Getenv("CONFIG_SMTP_PORT"))
-	var CONFIG_SENDER_NAME = os.Getenv("CONFIG_SENDER_NAME")
-	var CONFIG_AUTH_EMAIL = os.Getenv("CONFIG_AUTH_EMAIL")
-	var CONFIG_AUTH_PASSWORD = os.Getenv("CONFIG_AUTH_PASSWORD")
+	var tripName = transaction.User.Name
+	var price = strconv.Itoa(transaction.Total)
 
-	ac := accounting.Accounting{Symbol: "Rp", Precision: 2}
+	mailer := gomail.NewMessage()
+	mailer.SetHeader("From", CONFIG_SENDER_NAME)
+	mailer.SetHeader("To", transaction.User.Email)
+	mailer.SetHeader("Subject", "Status Transaction")
+	mailer.SetBody("text/html", fmt.Sprintf(`<!DOCTYPE html>
+    <html lang="en">
+      <head>
+      <meta charset="UTF-8" />
+      <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+      <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+      <title>Document</title>
+      <style>
+        h1 {
+        color: brown;
+        }
+      </style>
+      </head>
+      <body>
+      <h2>Product payment :</h2>
+      <ul style="list-style-type:none;">
+        <li>Name : %s</li>
+        <li>Total payment: Rp.%s</li>
+        <li>Status : %s</li>
+		<li>Iklan : %s</li>
+      </ul>
+      </body>
+    </html>`, tripName, price, status, "Terima kasih"))
 
-	var products []map[string]interface{}
-
-	for _, order := range transaction.Cart {
-		products = append(products, map[string]interface{}{
-			"ProductName": order.Book.Title,
-			"Price":       order.Book.Price,
-			"Qty":         order.OrderQty,
-			"SubTotal":    ac.FormatMoney(order.OrderQty * order.Book.Price),
-		})
-	}
-
-	data := map[string]interface{}{
-		"TransactionID":     transaction.Id,
-		"TransactionStatus": status,
-		"UserName":          transaction.User.Name,
-		"OrderDate":         timeIn("Asia/Jakarta").Format("Monday, 2 January 2006"),
-		"Total":             ac.FormatMoney(transaction.Total),
-		"Products":          products,
-	}
-
-	// mengambil file template
-	t, err := template.ParseFiles("view/notification_email.html")
-	if err != nil {
-		fmt.Println(err.Error())
-		return
-	}
-
-	bodyMail := new(bytes.Buffer)
-
-	// mengeksekusi template, dan memparse "data" ke template
-	t.Execute(bodyMail, data)
-
-	// create new message
-	trxMail := gomail.NewMessage()
-	trxMail.SetHeader("From", CONFIG_SENDER_NAME)
-	trxMail.SetHeader("To", transaction.User.Email)
-	trxMail.SetHeader("Subject", "WAYSBEANS ORDER NOTIFICATION")
-	trxMail.SetBody("text/html", bodyMail.String())
-
-	trxDialer := gomail.NewDialer(
+	dialer := gomail.NewDialer(
 		CONFIG_SMTP_HOST,
 		CONFIG_SMTP_PORT,
 		CONFIG_AUTH_EMAIL,
 		CONFIG_AUTH_PASSWORD,
 	)
 
-	err = trxDialer.DialAndSend(trxMail)
+	dialer.TLSConfig = &tls.Config{InsecureSkipVerify: true}
+
+	err := dialer.DialAndSend(mailer)
 	if err != nil {
 		log.Fatal(err.Error())
 	}
-
-	log.Println("Pesan terkirim!")
 }
+
+// func SendTransactionMail(status string, transaction models.Transaction) {
+
+// 	var CONFIG_SMTP_HOST = os.Getenv("CONFIG_SMTP_HOST")
+// 	var CONFIG_SMTP_PORT, _ = strconv.Atoi(os.Getenv("CONFIG_SMTP_PORT"))
+// 	var CONFIG_SENDER_NAME = os.Getenv("CONFIG_SENDER_NAME")
+// 	var CONFIG_AUTH_EMAIL = os.Getenv("CONFIG_AUTH_EMAIL")
+// 	var CONFIG_AUTH_PASSWORD = os.Getenv("CONFIG_AUTH_PASSWORD")
+
+// 	ac := accounting.Accounting{Symbol: "Rp", Precision: 2}
+
+// 	var products []map[string]interface{}
+
+// 	for _, order := range transaction.Cart {
+// 		products = append(products, map[string]interface{}{
+// 			"ProductName": order.Book.Title,
+// 			"Price":       order.Book.Price,
+// 			"Qty":         order.OrderQty,
+// 			"SubTotal":    ac.FormatMoney(order.OrderQty * order.Book.Price),
+// 		})
+// 	}
+
+// 	data := map[string]interface{}{
+// 		"TransactionID":     transaction.Id,
+// 		"TransactionStatus": status,
+// 		"UserName":          transaction.User.Name,
+// 		"OrderDate":         timeIn("Asia/Jakarta").Format("Monday, 2 January 2006"),
+// 		"Total":             ac.FormatMoney(transaction.Total),
+// 		"Products":          products,
+// 	}
+
+// 	// mengambil file template
+// 	t, err := template.ParseFiles("view/notification_email.html")
+// 	if err != nil {
+// 		fmt.Println(err.Error())
+// 		return
+// 	}
+
+// 	bodyMail := new(bytes.Buffer)
+
+// 	// mengeksekusi template, dan memparse "data" ke template
+// 	t.Execute(bodyMail, data)
+
+// 	// create new message
+// 	trxMail := gomail.NewMessage()
+// 	trxMail.SetHeader("From", CONFIG_SENDER_NAME)
+// 	trxMail.SetHeader("To", transaction.User.Email)
+// 	trxMail.SetHeader("Subject", "WAYSBOOK ORDER NOTIFICATION")
+// 	trxMail.SetBody("text/html", bodyMail.String())
+
+// 	trxDialer := gomail.NewDialer(
+// 		CONFIG_SMTP_HOST,
+// 		CONFIG_SMTP_PORT,
+// 		CONFIG_AUTH_EMAIL,
+// 		CONFIG_AUTH_PASSWORD,
+// 	)
+
+// 	err = trxDialer.DialAndSend(trxMail)
+// 	if err != nil {
+// 		log.Fatal(err.Error())
+// 	}
+
+// 	log.Println("Pesan terkirim!")
+// }
 
 // fungsi untuk mendapatkan waktu sesuai zona indonesia
 func timeIn(name string) time.Time {
