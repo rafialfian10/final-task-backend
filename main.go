@@ -20,7 +20,7 @@ func main() {
 	// ENV config
 	errEnv := godotenv.Load()
 	if errEnv != nil {
-		fmt.Println("Failed to load .env file")
+		panic("Failed to load env file")
 	}
 
 	// Database Init
