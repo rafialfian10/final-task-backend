@@ -3,7 +3,7 @@ package bookdto
 type BookResponse struct {
 	Id                 int    `json:"id"`
 	Title              string `json:"title" gorm:"type: varchar(255)"`
-	PublicationDate    string `json:"publicationdate"`
+	PublicationDate    string `json:"publication_date"`
 	ISBN               int    `json:"isbn"`
 	Pages              int    `json:"pages"`
 	Author             string `json:"author"`

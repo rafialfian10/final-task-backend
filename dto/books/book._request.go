@@ -2,7 +2,7 @@ package bookdto
 
 type CreateBookRequest struct {
 	Title           string `json:"title" form:"title" gorm:"type: varchar(255)"`
-	PublicationDate string `json:"publicationdate" form:"publicationdate"`
+	PublicationDate string `json:"publication_date" form:"publication_date"`
 	ISBN            int    `json:"isbn" form:"isbn" gorm:"type: int"`
 	Pages           int    `json:"pages" form:"pages" gorm:"type: int"`
 	Author          string `json:"author" form:"author" gorm:"type: varchar(255)"`
@@ -15,7 +15,7 @@ type CreateBookRequest struct {
 
 type UpdateBookRequest struct {
 	Title           string `json:"title" form:"title" gorm:"type: varchar(255)"`
-	PublicationDate string `json:"publicationdate" form:"publicationdate"`
+	PublicationDate string `json:"publication_date" form:"publication_date"`
 	ISBN            int    `json:"isbn" form:"isbn" gorm:"type: int"`
 	Pages           int    `json:"pages" form:"pages" gorm:"type: int"`
 	Author          string `json:"author" form:"author" gorm:"type: varchar(255)"`

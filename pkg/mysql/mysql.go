@@ -18,9 +18,6 @@ func DatabaseInit() {
 	// dsn := "root:@tcp(localhost:3306)/waysbook?charset=utf8mb4&parseTime=True&loc=Local"
 	// DB, err = gorm.Open(mysql.Open(dsn), &gorm.Config{})
 
-	// dsn := "root:E5SDkzrUjexknp0uvzsM@tcp(containers-us-west-102.railway.app:7295)/railway?charset=utf8mb4&parseTime=True&loc=Local"
-	// DB, err = gorm.Open(mysql.Open(dsn), &gorm.Config{})
-
 	var DB_HOST = os.Getenv("DB_HOST")
 	var DB_USER = os.Getenv("DB_USER")
 	var DB_PASSWORD = os.Getenv("DB_PASSWORD")

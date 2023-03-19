@@ -37,9 +37,9 @@ func (r *repository) GetCartByBook(bookId int, userId int) (models.Cart, error) 
 	return cart, err
 }
 
-func (r *repository) CreateCart(newCart models.Cart) (models.Cart, error) {
-	err := r.db.Select("BookId", "OrderQty", "UserId").Create(&newCart).Error
-	return newCart, err
+func (r *repository) CreateCart(cart models.Cart) (models.Cart, error) {
+	err := r.db.Select("BookId", "OrderQty", "UserId").Create(&cart).Error
+	return cart, err
 }
 
 func (r *repository) UpdateCart(cart models.Cart) (models.Cart, error) {

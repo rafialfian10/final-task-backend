@@ -3,7 +3,7 @@ package transactiondto
 type BookRequestForTransaction struct {
 	Id       int `json:"id"`
 	BookId   int `json:"book_id"`
-	OrderQty int `json:"orderQty"`
+	OrderQty int `json:"order_qty"`
 }
 
 type CreateTransactionRequest struct {
@@ -16,4 +16,8 @@ type UpdateTransactionRequest struct {
 	UserId int                         `json:"user_id"`
 	Books  []BookRequestForTransaction `json:"books"`
 	Status string                      `json:"status"`
+}
+
+type UpdateTransactionByAdminRequest struct {
+	Status string `json:"status" form:"status"`
 }

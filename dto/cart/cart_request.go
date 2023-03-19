@@ -5,6 +5,6 @@ type CreateCartRequest struct {
 }
 
 type UpdateCartRequest struct {
-	Event string `json:"event"`
-	Qty   int    `json:"qty"`
+	Event    string `json:"event"`
+	OrderQty int    `json:"order_qty"`
 }

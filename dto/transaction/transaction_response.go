@@ -5,7 +5,7 @@ import "waysbook/models"
 type BookResponseForTransaction struct {
 	Id                 int    `json:"id"`
 	Title              string `json:"title" gorm:"type: varchar(255)"`
-	PublicationDate    string `json:"publicationdate"`
+	PublicationDate    string `json:"publication_date"`
 	ISBN               int    `json:"isbn"`
 	Pages              int    `json:"pages"`
 	Author             string `json:"author"`
@@ -17,7 +17,7 @@ type BookResponseForTransaction struct {
 	Book               string `json:"book"`
 	Thumbnail          string `json:"thumbnail"`
 	Quota              int    `json:"quota" form:"quota"`
-	OrderQty           int    `json:"orderQty"`
+	OrderQty           int    `json:"order_qty"`
 }
 
 type TransactionResponse struct {

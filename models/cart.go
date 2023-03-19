@@ -15,8 +15,8 @@ type CartResponse struct {
 	Id            int    `json:"-"`
 	TransactionId string `json:"-" gorm:"type: varchar(255)"`
 	BookId        int    `json:"-"`
+	OrderQty      int    `json:"order_qty" gorm:"type: int"`
 	Book          BookResponse
-	OrderQty      int `json:"orderQty" gorm:"type: int"`
 }
 
 func (CartResponse) TableName() string {

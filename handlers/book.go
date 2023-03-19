@@ -27,7 +27,7 @@ func HanlderBook(BookRepository repositories.BookRepository) *handlerBook {
 	return &handlerBook{BookRepository}
 }
 
-// function get all book
+// function get all books
 func (h *handlerBook) FindBooks(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 
@@ -47,8 +47,8 @@ func (h *handlerBook) FindBooks(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(response)
 }
 
-// function get all book promo
-func (h *handlerBook) FindBookPromo(w http.ResponseWriter, r *http.Request) {
+// function get all books promo
+func (h *handlerBook) FindBooksPromo(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 
 	books, err := h.BookRepository.FindBookPromo()
@@ -65,7 +65,7 @@ func (h *handlerBook) FindBookPromo(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(response)
 }
 
-// function get book by id
+// function get detail book
 func (h *handlerBook) GetBook(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 
@@ -95,8 +95,8 @@ func (h *handlerBook) CreateBook(w http.ResponseWriter, r *http.Request) {
 	filePDF := dataPDF.(string)
 
 	// get image name for thumbnail
-	dataImageContex := r.Context().Value("dataFile")
-	filepath := dataImageContex.(string)
+	dataImage := r.Context().Value("dataFile")
+	fileImage := dataImage.(string)
 
 	//parse data
 	isbn, _ := strconv.Atoi(r.FormValue("isbn"))
@@ -106,7 +106,7 @@ func (h *handlerBook) CreateBook(w http.ResponseWriter, r *http.Request) {
 
 	request := booksdto.CreateBookRequest{
 		Title:           r.FormValue("title"),
-		PublicationDate: r.FormValue("publicationdate"),
+		PublicationDate: r.FormValue("publication_date"),
 		ISBN:            isbn,
 		Pages:           pages,
 		Author:          r.FormValue("author"),
@@ -134,7 +134,7 @@ func (h *handlerBook) CreateBook(w http.ResponseWriter, r *http.Request) {
 	cld, _ := cloudinary.NewFromParams(CLOUD_NAME, API_KEY, API_SECRET)
 	cld1, _ := cloudinary.NewFromParams(CLOUD_NAME, API_KEY, API_SECRET)
 
-	resp, err := cld.Upload.Upload(ctx, filepath, uploader.UploadParams{Folder: "waysbook"})
+	resp, err := cld.Upload.Upload(ctx, fileImage, uploader.UploadParams{Folder: "waysbook"})
 	resp1, err1 := cld1.Upload.Upload(ctx, filePDF, uploader.UploadParams{Folder: "waysbook"})
 
 	if err != nil {
@@ -145,7 +145,7 @@ func (h *handlerBook) CreateBook(w http.ResponseWriter, r *http.Request) {
 		fmt.Println(err.Error())
 	}
 
-	publicationDate, _ := time.Parse("2006-01-02", r.FormValue("publicationdate"))
+	publicationDate, _ := time.Parse("2006-01-02", r.FormValue("publication_date"))
 
 	book := models.Book{
 		Title:              request.Title,
@@ -164,7 +164,6 @@ func (h *handlerBook) CreateBook(w http.ResponseWriter, r *http.Request) {
 	}
 
 	dataBook, err := h.BookRepository.CreateBook(book)
-
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		response := dto.ErrorResult{Code: http.StatusInternalServerError, Message: err.Error()}
@@ -204,8 +203,8 @@ func (h *handlerBook) UpdateBook(w http.ResponseWriter, r *http.Request) {
 	filePDF := dataPDF.(string)
 
 	// get image name for thumbnail
-	dataImageContex := r.Context().Value("dataFile")
-	filepath := dataImageContex.(string)
+	dataImage := r.Context().Value("dataFile")
+	fileImage := dataImage.(string)
 
 	// cloudinary
 	var ctx = context.Background()
@@ -217,7 +216,7 @@ func (h *handlerBook) UpdateBook(w http.ResponseWriter, r *http.Request) {
 	cld, _ := cloudinary.NewFromParams(CLOUD_NAME, API_KEY, API_SECRET)
 	cld1, _ := cloudinary.NewFromParams(CLOUD_NAME, API_KEY, API_SECRET)
 
-	resp, err := cld.Upload.Upload(ctx, filepath, uploader.UploadParams{Folder: "waysbook"})
+	resp, err := cld.Upload.Upload(ctx, fileImage, uploader.UploadParams{Folder: "waysbook"})
 	resp1, err1 := cld1.Upload.Upload(ctx, filePDF, uploader.UploadParams{Folder: "waysbook"})
 
 	if err != nil {
@@ -234,7 +233,7 @@ func (h *handlerBook) UpdateBook(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// parse time
-	date, _ := time.Parse("2006-01-02", r.FormValue("publicationdate"))
+	date, _ := time.Parse("2006-01-02", r.FormValue("publication_date"))
 	time := time.Now()
 	if date != time {
 		book.PublicationDate = date
@@ -380,6 +379,7 @@ func (h *handlerBook) DeleteBook(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(response)
 }
 
+// function convert response book
 func convertResponseBook(u models.Book) booksdto.BookResponse {
 	return booksdto.BookResponse{
 		Id:              u.Id,

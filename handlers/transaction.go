@@ -31,30 +31,24 @@ func HandlerTransaction(transactionRepository repositories.TransactionRepository
 	return &handlerTransaction{transactionRepository}
 }
 
-// mengambil seluruh data transaksi
+// function get all transaction
 func (h *handlerTransaction) FindTransactions(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 
 	transactions, err := h.TransactionRepository.FindTransactions()
 	if err != nil {
 		w.WriteHeader(http.StatusNotFound)
-		res := dto.ErrorResult{
-			Code:    http.StatusBadRequest,
-			Message: err.Error(),
-		}
+		res := dto.ErrorResult{Code: http.StatusBadRequest, Message: err.Error()}
 		json.NewEncoder(w).Encode(res)
 		return
 	}
 
 	w.WriteHeader(http.StatusOK)
-	res := dto.SuccessResult{
-		Code: http.StatusOK,
-		Data: convertMultipleTransactionResponse(transactions),
-	}
+	res := dto.SuccessResult{Code: http.StatusOK, Data: convertMultipleTransactionResponse(transactions)}
 	json.NewEncoder(w).Encode(res)
 }
 
-// mengambil seluruh data transaksi milik user tertentu
+// function get all data transaction user
 func (h *handlerTransaction) FindTransactionsByUser(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 
@@ -64,23 +58,17 @@ func (h *handlerTransaction) FindTransactionsByUser(w http.ResponseWriter, r *ht
 	transactions, err := h.TransactionRepository.FindTransactionsByUser(idUser)
 	if err != nil {
 		w.WriteHeader(http.StatusNotFound)
-		res := dto.ErrorResult{
-			Code:    http.StatusBadRequest,
-			Message: err.Error(),
-		}
+		res := dto.ErrorResult{Code: http.StatusBadRequest, Message: err.Error()}
 		json.NewEncoder(w).Encode(res)
 		return
 	}
 
 	w.WriteHeader(http.StatusOK)
-	res := dto.SuccessResult{
-		Code: http.StatusOK,
-		Data: convertMultipleTransactionResponse(transactions),
-	}
+	res := dto.SuccessResult{Code: http.StatusOK, Data: convertMultipleTransactionResponse(transactions)}
 	json.NewEncoder(w).Encode(res)
 }
 
-// mengambil 1 data transaksi
+// function get detail transaction
 func (h *handlerTransaction) GetDetailTransaction(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 
@@ -89,23 +77,17 @@ func (h *handlerTransaction) GetDetailTransaction(w http.ResponseWriter, r *http
 	transaction, err := h.TransactionRepository.GetTransaction(id)
 	if err != nil {
 		w.WriteHeader(http.StatusNotFound)
-		res := dto.ErrorResult{
-			Code:    http.StatusBadRequest,
-			Message: err.Error(),
-		}
+		res := dto.ErrorResult{Code: http.StatusBadRequest, Message: err.Error()}
 		json.NewEncoder(w).Encode(res)
 		return
 	}
 
 	w.WriteHeader(http.StatusOK)
-	res := dto.SuccessResult{
-		Code: http.StatusOK,
-		Data: convertTransactionResponse(transaction),
-	}
+	res := dto.SuccessResult{Code: http.StatusOK, Data: convertOneTransactionResponse(transaction)}
 	json.NewEncoder(w).Encode(res)
 }
 
-// membuat transaksi baru
+// function add transaction
 func (h *handlerTransaction) CreateTransaction(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 
@@ -115,7 +97,7 @@ func (h *handlerTransaction) CreateTransaction(w http.ResponseWriter, r *http.Re
 	userInfo := r.Context().Value("userInfo").(jwt.MapClaims)
 	request.UserId = int(userInfo["id"].(float64))
 
-	// memvalidasi inputan dari request body
+	// validasi semua input
 	validation := validator.New()
 	errValidation := validation.Struct(request)
 	if errValidation != nil {
@@ -125,34 +107,31 @@ func (h *handlerTransaction) CreateTransaction(w http.ResponseWriter, r *http.Re
 		return
 	}
 
-	newTransaction := models.Transaction{
-		Id:        fmt.Sprintf("TRX-%d-%d", request.UserId, timeIn("Asia/Jakarta").UnixNano()),
+	transaction := models.Transaction{
+		Id:        fmt.Sprintf("%d-%d", request.UserId, timeIn("Asia/Jakarta").UnixNano()),
 		OrderDate: timeIn("Asia/Jakarta"),
 		Total:     request.Total,
-		Status:    "new",
+		Status:    "pending",
 		UserId:    request.UserId,
 	}
 
 	for _, order := range request.Books {
-		newTransaction.Cart = append(newTransaction.Cart, models.CartResponse{
+		transaction.Cart = append(transaction.Cart, models.CartResponse{
 			Id:       order.Id,
 			BookId:   order.BookId,
 			OrderQty: order.OrderQty,
 		})
 	}
 
-	transactionAdded, err := h.TransactionRepository.CreateTransaction(newTransaction)
+	addTransaction, err := h.TransactionRepository.CreateTransaction(transaction)
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
-		res := dto.ErrorResult{
-			Code:    http.StatusBadRequest,
-			Message: err.Error(),
-		}
+		res := dto.ErrorResult{Code: http.StatusBadRequest, Message: err.Error()}
 		json.NewEncoder(w).Encode(res)
 		return
 	}
 
-	transaction, err := h.TransactionRepository.GetTransaction(transactionAdded.Id)
+	transactionAdded, err := h.TransactionRepository.GetTransaction(addTransaction.Id)
 	if err != nil {
 		w.WriteHeader(http.StatusNotFound)
 		res := dto.ErrorResult{
@@ -170,35 +149,33 @@ func (h *handlerTransaction) CreateTransaction(w http.ResponseWriter, r *http.Re
 	// 2. Initiate Snap request
 	req := &snap.Request{
 		TransactionDetails: midtrans.TransactionDetails{
-			OrderID:  transaction.Id,
-			GrossAmt: int64(transaction.Total),
+			OrderID:  transactionAdded.Id,
+			GrossAmt: int64(transactionAdded.Total),
 		},
 		CreditCard: &snap.CreditCardDetails{
 			Secure: true,
 		},
 		CustomerDetail: &midtrans.CustomerDetails{
-			FName: transaction.User.Name,
-			Phone: transaction.User.Phone,
+			FName: transactionAdded.User.Name,
+			Phone: transactionAdded.User.Phone,
 			BillAddr: &midtrans.CustomerAddress{
-				FName:   transaction.User.Name,
-				Phone:   transaction.User.Phone,
-				Address: transaction.User.Address,
-				// Postcode: transaction.User.PostCode,
+				FName:   transactionAdded.User.Name,
+				Phone:   transactionAdded.User.Phone,
+				Address: transactionAdded.User.Address,
 			},
 			ShipAddr: &midtrans.CustomerAddress{
-				FName:   transaction.User.Name,
-				Phone:   transaction.User.Phone,
-				Address: transaction.User.Address,
-				// Postcode: transaction.User.PostCode,
+				FName:   transactionAdded.User.Name,
+				Phone:   transactionAdded.User.Phone,
+				Address: transactionAdded.User.Address,
 			},
 		},
 	}
 
 	// 3. Request create Snap transaction to Midtrans
 	snapResp, _ := s.CreateTransactionToken(req)
-	fmt.Println("Response :", snapResp)
+	// fmt.Println("Response :", snapResp)
 
-	transaction, err = h.TransactionRepository.UpdateTokenTransaction(snapResp, transaction.Id)
+	transactionAdded, err = h.TransactionRepository.UpdateTokenTransaction(snapResp, transactionAdded.Id)
 	if err != nil {
 		w.WriteHeader(http.StatusNotFound)
 		res := dto.ErrorResult{
@@ -210,85 +187,132 @@ func (h *handlerTransaction) CreateTransaction(w http.ResponseWriter, r *http.Re
 	}
 
 	w.WriteHeader(http.StatusCreated)
-	res := dto.SuccessResult{
-		Code: http.StatusOK, Data: convertTransactionResponse(transaction),
-	}
+	res := dto.SuccessResult{Code: http.StatusOK, Data: convertOneTransactionResponse(transactionAdded)}
 	json.NewEncoder(w).Encode(res)
 }
 
-func (h *handlerTransaction) UpdateTransactionStatus(w http.ResponseWriter, r *http.Request) {
+// function update transaction
+// func (h *handlerTransaction) UpdateTransactionStatus(w http.ResponseWriter, r *http.Request) {
+// 	w.Header().Set("Content-Type", "application/json")
+
+// 	id := mux.Vars(r)["id"]
+
+// 	var request transactiondto.UpdateTransactionRequest
+
+// 	err := json.NewDecoder(r.Body).Decode(&request)
+// 	if err != nil {
+// 		w.WriteHeader(http.StatusBadRequest)
+// 		res := dto.ErrorResult{
+// 			Code:    http.StatusBadRequest,
+// 			Message: err.Error(),
+// 		}
+// 		json.NewEncoder(w).Encode(res)
+// 		return
+// 	}
+
+// 	fmt.Println("ID : ", id)
+// 	fmt.Println("Status : ", request.Status)
+
+// 	// memeriksa transaksi yang ingin diupdate
+// 	_, err = h.TransactionRepository.GetTransaction(id)
+// 	if err != nil {
+// 		w.WriteHeader(http.StatusNotFound)
+// 		res := dto.ErrorResult{
+// 			Code:    http.StatusBadRequest,
+// 			Message: err.Error(),
+// 		}
+// 		json.NewEncoder(w).Encode(res)
+// 		return
+// 	}
+
+// 	// mengupdate status transaksi
+// 	transaction, err := h.TransactionRepository.UpdateTransaction(request.Status, id)
+// 	if err != nil {
+// 		w.WriteHeader(http.StatusBadRequest)
+// 		res := dto.ErrorResult{
+// 			Code:    http.StatusBadRequest,
+// 			Message: err.Error(),
+// 		}
+// 		json.NewEncoder(w).Encode(res)
+// 		return
+// 	}
+
+// 	// mengambil data transaksi yang sudah diupdate
+// 	transaction, err = h.TransactionRepository.GetTransaction(transaction.Id)
+// 	if err != nil {
+// 		w.WriteHeader(http.StatusNotFound)
+// 		res := dto.ErrorResult{
+// 			Code:    http.StatusBadRequest,
+// 			Message: err.Error(),
+// 		}
+// 		json.NewEncoder(w).Encode(res)
+// 		return
+// 	}
+
+// 	if request.Status == "reject" {
+// 		SendTransactionMail("Rejected", transaction)
+// 	} else if request.Status == "sent" {
+// 		SendTransactionMail("Success, Product On Delivery", transaction)
+// 	} else if request.Status == "done" {
+// 		SendTransactionMail("Success, Product Received", transaction)
+// 	}
+
+// 	w.WriteHeader(http.StatusOK)
+// 	res := dto.SuccessResult{Code: http.StatusOK, Data: convertOneTransactionResponse(transaction)}
+// 	json.NewEncoder(w).Encode(res)
+// }
+
+// function update transaction by admin
+func (h *handlerTransaction) UpdateTransactionByAdmin(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 
 	id := mux.Vars(r)["id"]
 
-	var request transactiondto.UpdateTransactionRequest
-
-	err := json.NewDecoder(r.Body).Decode(&request)
-	if err != nil {
-		w.WriteHeader(http.StatusBadRequest)
-		res := dto.ErrorResult{
-			Code:    http.StatusBadRequest,
-			Message: err.Error(),
-		}
-		json.NewEncoder(w).Encode(res)
-		return
+	status := r.FormValue("status")
+	request := transactiondto.UpdateTransactionByAdminRequest{
+		Status: status,
 	}
 
-	fmt.Println("ID : ", id)
-	fmt.Println("Status : ", request.Status)
+	// mengambil data dari request form
+	json.NewDecoder(r.Body).Decode(&request)
+	fmt.Println("status", request.Status)
 
-	// memeriksa transaksi yang ingin diupdate
-	_, err = h.TransactionRepository.GetTransaction(id)
+	// get data yang ingin diupdate berdasarkan id yang didapatkan dari url
+	_, err := h.TransactionRepository.GetTransaction(id)
 	if err != nil {
 		w.WriteHeader(http.StatusNotFound)
-		res := dto.ErrorResult{
-			Code:    http.StatusBadRequest,
-			Message: err.Error(),
-		}
-		json.NewEncoder(w).Encode(res)
+		response := dto.ErrorResult{Code: http.StatusNotFound, Message: err.Error()}
+		json.NewEncoder(w).Encode(response)
 		return
 	}
 
-	// mengupdate status transaksi
-	transaction, err := h.TransactionRepository.UpdateTransaction(request.Status, id)
+	// fmt.Println("ID after", id)
+
+	// mengirim data transaction yang sudah diupdate ke database
+	transactionUpdated, err := h.TransactionRepository.UpdateTransaction(request.Status, id)
+	fmt.Println("Transaction Updated", transactionUpdated)
 	if err != nil {
-		w.WriteHeader(http.StatusBadRequest)
-		res := dto.ErrorResult{
-			Code:    http.StatusBadRequest,
-			Message: err.Error(),
-		}
-		json.NewEncoder(w).Encode(res)
+		w.WriteHeader(http.StatusInternalServerError)
+		response := dto.ErrorResult{Code: http.StatusInternalServerError, Message: err.Error()}
+		json.NewEncoder(w).Encode(response)
 		return
 	}
 
-	// mengambil data transaksi yang sudah diupdate
-	transaction, err = h.TransactionRepository.GetTransaction(transaction.Id)
+	getTransactionUpdated, err := h.TransactionRepository.GetTransaction(transactionUpdated.Id)
 	if err != nil {
-		w.WriteHeader(http.StatusNotFound)
-		res := dto.ErrorResult{
-			Code:    http.StatusBadRequest,
-			Message: err.Error(),
-		}
-		json.NewEncoder(w).Encode(res)
+		w.WriteHeader(http.StatusInternalServerError)
+		response := dto.ErrorResult{Code: http.StatusInternalServerError, Message: err.Error()}
+		json.NewEncoder(w).Encode(response)
 		return
 	}
 
-	if request.Status == "rejected" {
-		SendTransactionMail("Rejected", transaction)
-	} else if request.Status == "sent" {
-		SendTransactionMail("Success, Product On Delivery", transaction)
-	} else if request.Status == "done" {
-		SendTransactionMail("Success, Product Received", transaction)
-	}
+	response := dto.SuccessResult{Code: http.StatusOK, Data: convertOneTransactionResponse(getTransactionUpdated)}
 
-	w.WriteHeader(http.StatusOK)
-	res := dto.SuccessResult{
-		Code: http.StatusOK,
-		Data: convertTransactionResponse(transaction),
-	}
-	json.NewEncoder(w).Encode(res)
+	// mengirim response
+	json.NewEncoder(w).Encode(response)
 }
 
+// function notification
 func (h *handlerTransaction) Notification(w http.ResponseWriter, r *http.Request) {
 	// 1. Initialize empty map
 	var notificationPayload map[string]interface{}
@@ -296,13 +320,12 @@ func (h *handlerTransaction) Notification(w http.ResponseWriter, r *http.Request
 	// 2. Parse JSON request body and use it to set json to payload
 	err := json.NewDecoder(r.Body).Decode(&notificationPayload)
 	if err != nil {
-		// do something on error when decode
 		w.WriteHeader(http.StatusBadRequest)
 		response := dto.ErrorResult{Code: http.StatusBadRequest, Message: err.Error()}
 		json.NewEncoder(w).Encode(response)
 		return
 	}
-	// 3. Get order-id from payload
+	// 3. Get order_id from payload
 	orderId, exists := notificationPayload["order_id"].(string)
 	if !exists {
 		// do something when key `order_id` not found
@@ -324,28 +347,25 @@ func (h *handlerTransaction) Notification(w http.ResponseWriter, r *http.Request
 		// 5. Do set transaction status based on response from check transaction status
 		if transactionStatus == "capture" {
 			if fraudStatus == "challenge" {
-				// TODO set transaction status on your database to 'challenge'
-				// e.g: 'Payment status challenged. Please take action on your Merchant Administration Portal
 				h.TransactionRepository.UpdateTransaction("pending", transaction.Id)
 			} else if fraudStatus == "accept" {
-				// TODO set transaction status on your database to 'success'
 				h.TransactionRepository.UpdateTransaction("success", transaction.Id)
+				transaction.Status = "success"
 				SendTransactionMail("Success", transaction)
 			}
 		} else if transactionStatus == "settlement" {
-			// TODO set transaction status on your databaase to 'success'
 			h.TransactionRepository.UpdateTransaction("success", transaction.Id)
+			transaction.Status = "success"
 			SendTransactionMail("success", transaction)
 		} else if transactionStatus == "deny" {
-			// TODO you can ignore 'deny', because most of the time it allows payment retries
-			// and later can become success
 			h.TransactionRepository.UpdateTransaction("failed", transaction.Id)
+			transaction.Status = "failed"
 		} else if transactionStatus == "cancel" || transactionStatus == "expire" {
-			// TODO set transaction status on your databaase to 'failure'
 			h.TransactionRepository.UpdateTransaction("failed", transaction.Id)
+			transaction.Status = "failed"
 			SendTransactionMail("Failed", transaction)
 		} else if transactionStatus == "pending" {
-			// TODO set transaction status on your databaase to 'pending' / waiting payment
+			transaction.Status = "pending"
 			h.TransactionRepository.UpdateTransaction("pending", transaction.Id)
 		}
 	}
@@ -353,79 +373,7 @@ func (h *handlerTransaction) Notification(w http.ResponseWriter, r *http.Request
 	w.Write([]byte("ok"))
 }
 
-func convertMultipleTransactionResponse(transactions []models.Transaction) []transactiondto.TransactionResponse {
-	var transactionsResponse []transactiondto.TransactionResponse
-
-	for _, trx := range transactions {
-		var trxResponse = transactiondto.TransactionResponse{
-			Id:         trx.Id,
-			MidtransId: trx.MidtransId,
-			OrderDate:  trx.OrderDate.Format("Monday, 2 January 2006"),
-			Total:      trx.Total,
-			Status:     trx.Status,
-			User:       trx.User,
-		}
-
-		for _, order := range trx.Cart {
-			trxResponse.Book = append(trxResponse.Book, transactiondto.BookResponseForTransaction{
-				Id:                 order.Id,
-				Title:              order.Book.Title,
-				PublicationDate:    order.Book.PublicationDate.Format("2 january 2006"),
-				ISBN:               order.Book.ISBN,
-				Pages:              order.Book.Pages,
-				Author:             order.Book.Author,
-				Price:              order.Book.Price,
-				IsPromo:            order.Book.IsPromo,
-				Discount:           order.Book.Discount,
-				PriceAfterDiscount: order.Book.PriceAfterDiscount,
-				Description:        order.Book.Description,
-				Book:               order.Book.Book,
-				Thumbnail:          order.Book.Thumbnail,
-				Quota:              order.Book.Quota,
-				OrderQty:           order.OrderQty,
-			})
-		}
-
-		transactionsResponse = append(transactionsResponse, trxResponse)
-	}
-
-	return transactionsResponse
-}
-
-func convertTransactionResponse(transaction models.Transaction) transactiondto.TransactionResponse {
-	var transactionResponse = transactiondto.TransactionResponse{
-		Id:         transaction.Id,
-		MidtransId: transaction.MidtransId,
-		OrderDate:  transaction.OrderDate.Format("Monday, 2 January 2006"),
-		Total:      transaction.Total,
-		Status:     transaction.Status,
-		User:       transaction.User,
-	}
-
-	for _, order := range transaction.Cart {
-		transactionResponse.Book = append(transactionResponse.Book, transactiondto.BookResponseForTransaction{
-			Id:                 order.Id,
-			Title:              order.Book.Title,
-			PublicationDate:    order.Book.PublicationDate.Format("2 january 2006"),
-			ISBN:               order.Book.ISBN,
-			Pages:              order.Book.Pages,
-			Author:             order.Book.Author,
-			Price:              order.Book.Price,
-			IsPromo:            order.Book.IsPromo,
-			Discount:           order.Book.Discount,
-			PriceAfterDiscount: order.Book.PriceAfterDiscount,
-			Description:        order.Book.Description,
-			Book:               order.Book.Book,
-			Thumbnail:          order.Book.Thumbnail,
-			Quota:              order.Book.Quota,
-			OrderQty:           order.OrderQty,
-		})
-	}
-
-	return transactionResponse
-}
-
-// fungsi untuk kirim email transaksi
+// function send email
 func SendTransactionMail(status string, transaction models.Transaction) {
 	var CONFIG_SMTP_HOST = "smtp.gmail.com"
 	var CONFIG_SMTP_PORT = 587
@@ -479,71 +427,81 @@ func SendTransactionMail(status string, transaction models.Transaction) {
 	}
 }
 
-// func SendTransactionMail(status string, transaction models.Transaction) {
+// function multiple transaction response
+func convertMultipleTransactionResponse(transactions []models.Transaction) []transactiondto.TransactionResponse {
+	var transactionsResponse []transactiondto.TransactionResponse
 
-// 	var CONFIG_SMTP_HOST = os.Getenv("CONFIG_SMTP_HOST")
-// 	var CONFIG_SMTP_PORT, _ = strconv.Atoi(os.Getenv("CONFIG_SMTP_PORT"))
-// 	var CONFIG_SENDER_NAME = os.Getenv("CONFIG_SENDER_NAME")
-// 	var CONFIG_AUTH_EMAIL = os.Getenv("CONFIG_AUTH_EMAIL")
-// 	var CONFIG_AUTH_PASSWORD = os.Getenv("CONFIG_AUTH_PASSWORD")
+	for _, t := range transactions {
+		var tResponse = transactiondto.TransactionResponse{
+			Id:         t.Id,
+			MidtransId: t.MidtransId,
+			OrderDate:  t.OrderDate.Format("Monday, 2 January 2006"),
+			Total:      t.Total,
+			Status:     t.Status,
+			User:       t.User,
+		}
 
-// 	ac := accounting.Accounting{Symbol: "Rp", Precision: 2}
+		for _, order := range t.Cart {
+			tResponse.Book = append(tResponse.Book, transactiondto.BookResponseForTransaction{
+				Id:                 order.Id,
+				Title:              order.Book.Title,
+				PublicationDate:    order.Book.PublicationDate.Format("2 january 2006"),
+				ISBN:               order.Book.ISBN,
+				Pages:              order.Book.Pages,
+				Author:             order.Book.Author,
+				Price:              order.Book.Price,
+				IsPromo:            order.Book.IsPromo,
+				Discount:           order.Book.Discount,
+				PriceAfterDiscount: order.Book.PriceAfterDiscount,
+				Description:        order.Book.Description,
+				Book:               order.Book.Book,
+				Thumbnail:          order.Book.Thumbnail,
+				Quota:              order.Book.Quota,
+				OrderQty:           order.OrderQty,
+			})
+		}
 
-// 	var products []map[string]interface{}
+		transactionsResponse = append(transactionsResponse, tResponse)
+	}
 
-// 	for _, order := range transaction.Cart {
-// 		products = append(products, map[string]interface{}{
-// 			"ProductName": order.Book.Title,
-// 			"Price":       order.Book.Price,
-// 			"Qty":         order.OrderQty,
-// 			"SubTotal":    ac.FormatMoney(order.OrderQty * order.Book.Price),
-// 		})
-// 	}
+	return transactionsResponse
+}
 
-// 	data := map[string]interface{}{
-// 		"TransactionID":     transaction.Id,
-// 		"TransactionStatus": status,
-// 		"UserName":          transaction.User.Name,
-// 		"OrderDate":         timeIn("Asia/Jakarta").Format("Monday, 2 January 2006"),
-// 		"Total":             ac.FormatMoney(transaction.Total),
-// 		"Products":          products,
-// 	}
+// function convert one transaction response
+func convertOneTransactionResponse(transaction models.Transaction) transactiondto.TransactionResponse {
+	var transactionResponse = transactiondto.TransactionResponse{
+		Id:         transaction.Id,
+		MidtransId: transaction.MidtransId,
+		OrderDate:  transaction.OrderDate.Format("Monday, 2 January 2006"),
+		Total:      transaction.Total,
+		Status:     transaction.Status,
+		User:       transaction.User,
+	}
 
-// 	// mengambil file template
-// 	t, err := template.ParseFiles("view/notification_email.html")
-// 	if err != nil {
-// 		fmt.Println(err.Error())
-// 		return
-// 	}
+	for _, order := range transaction.Cart {
+		transactionResponse.Book = append(transactionResponse.Book, transactiondto.BookResponseForTransaction{
+			Id:                 order.Id,
+			Title:              order.Book.Title,
+			PublicationDate:    order.Book.PublicationDate.Format("2 january 2006"),
+			ISBN:               order.Book.ISBN,
+			Pages:              order.Book.Pages,
+			Author:             order.Book.Author,
+			Price:              order.Book.Price,
+			IsPromo:            order.Book.IsPromo,
+			Discount:           order.Book.Discount,
+			PriceAfterDiscount: order.Book.PriceAfterDiscount,
+			Description:        order.Book.Description,
+			Book:               order.Book.Book,
+			Thumbnail:          order.Book.Thumbnail,
+			Quota:              order.Book.Quota,
+			OrderQty:           order.OrderQty,
+		})
+	}
 
-// 	bodyMail := new(bytes.Buffer)
+	return transactionResponse
+}
 
-// 	// mengeksekusi template, dan memparse "data" ke template
-// 	t.Execute(bodyMail, data)
-
-// 	// create new message
-// 	trxMail := gomail.NewMessage()
-// 	trxMail.SetHeader("From", CONFIG_SENDER_NAME)
-// 	trxMail.SetHeader("To", transaction.User.Email)
-// 	trxMail.SetHeader("Subject", "WAYSBOOK ORDER NOTIFICATION")
-// 	trxMail.SetBody("text/html", bodyMail.String())
-
-// 	trxDialer := gomail.NewDialer(
-// 		CONFIG_SMTP_HOST,
-// 		CONFIG_SMTP_PORT,
-// 		CONFIG_AUTH_EMAIL,
-// 		CONFIG_AUTH_PASSWORD,
-// 	)
-
-// 	err = trxDialer.DialAndSend(trxMail)
-// 	if err != nil {
-// 		log.Fatal(err.Error())
-// 	}
-
-// 	log.Println("Pesan terkirim!")
-// }
-
-// fungsi untuk mendapatkan waktu sesuai zona indonesia
+// function to get the time according to the Indonesian zone
 func timeIn(name string) time.Time {
 	loc, err := time.LoadLocation(name)
 	if err != nil {
