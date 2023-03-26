@@ -49,21 +49,14 @@ func (h *handlerUser) GetUser(w http.ResponseWriter, r *http.Request) {
 	user, err := h.UserRepository.GetUser(userId)
 	if err != nil {
 		w.WriteHeader(http.StatusNotFound)
-		response := dto.ErrorResult{
-			Code:    http.StatusBadRequest,
-			Message: err.Error(),
-		}
+		response := dto.ErrorResult{Code: http.StatusBadRequest, Message: err.Error()}
 		json.NewEncoder(w).Encode(response)
 		return
 	}
 
 	w.WriteHeader(http.StatusOK)
-	response := dto.SuccessResult{
-		Code: http.StatusOK,
-		Data: convertResponseUser(user),
-	}
+	response := dto.SuccessResult{Code: http.StatusOK, Data: convertResponseUser(user)}
 	json.NewEncoder(w).Encode(response)
-
 }
 
 func (h *handlerUser) UpdateUser(w http.ResponseWriter, r *http.Request) {

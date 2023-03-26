@@ -7,15 +7,17 @@ type BookRequestForTransaction struct {
 }
 
 type CreateTransactionRequest struct {
-	Total  int                         `json:"total" validate:"required"`
-	UserId int                         `json:"user_id" validate:"required"`
-	Books  []BookRequestForTransaction `json:"books" validate:"required"`
+	Total  int                         `json:"total"`
+	UserId int                         `json:"user_id"`
+	Books  []BookRequestForTransaction `json:"books"`
+	Image  string                      `json:"image"`
 }
 type UpdateTransactionRequest struct {
 	Total  int                         `json:"total"`
 	UserId int                         `json:"user_id"`
 	Books  []BookRequestForTransaction `json:"books"`
 	Status string                      `json:"status"`
+	Image  string                      `json:"image"`
 }
 
 type UpdateTransactionByAdminRequest struct {

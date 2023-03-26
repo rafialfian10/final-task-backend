@@ -38,8 +38,8 @@ func (h *handlerBook) FindBooks(w http.ResponseWriter, r *http.Request) {
 	}
 
 	for i, p := range books {
-		imagePath := os.Getenv("PATH_FILE") + p.Thumbnail
-		books[i].Thumbnail = imagePath
+		fileImage := os.Getenv("PATH_FILE") + p.Thumbnail
+		books[i].Thumbnail = fileImage
 	}
 
 	w.WriteHeader(http.StatusOK)
