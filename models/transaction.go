@@ -11,7 +11,7 @@ type Transaction struct {
 	Cart       []CartResponse `json:"cart" gorm:"foreignKey:TransactionId"`
 	Total      int            `json:"total"`
 	Status     string         `json:"status"`
-	Image      string         `json:"image" gorm:"type: varchar(255)"`
+	// Image      string         `json:"image" gorm:"type: varchar(255)"`
 }
 
 type TransactionResponse struct {
@@ -22,7 +22,7 @@ type TransactionResponse struct {
 	User       UserResponse `json:"users"`
 	Total      int          `json:"total"`
 	Status     string       `json:"status"`
-	Image      string       `json:"image" gorm:"type: varchar(255)"`
+	// Image      string       `json:"image" gorm:"type: varchar(255)"`
 }
 
 func (TransactionResponse) TableName() string {

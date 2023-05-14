@@ -70,13 +70,13 @@ func UploadFileImage(next http.HandlerFunc) http.HandlerFunc {
 }
 
 // function Upload file untuk upload file bukti transfer
-func UploadFileImageTransfer(next http.HandlerFunc) http.HandlerFunc {
+func UploadFileTransaction(next http.HandlerFunc) http.HandlerFunc {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 
 		file, _, err := r.FormFile("image")
 
 		if err != nil && r.Method == "PATCH" {
-			ctx := context.WithValue(r.Context(), "dataFile", "false")
+			ctx := context.WithValue(r.Context(), "dataFileTrans", "false")
 			next.ServeHTTP(w, r.WithContext(ctx))
 			return
 		}
@@ -124,7 +124,7 @@ func UploadFileImageTransfer(next http.HandlerFunc) http.HandlerFunc {
 		// filepath := data[8:] // split uploads(huruf paling 8 depan akan diambil)
 
 		// filename akan ditambahkan kedalam variable ctx. dan r.Context akan di panggil jika ingin upload file
-		ctx := context.WithValue(r.Context(), "dataFile", data)
+		ctx := context.WithValue(r.Context(), "dataFileTrans", data)
 		next.ServeHTTP(w, r.WithContext(ctx))
 	})
 }

@@ -10,14 +10,14 @@ type CreateTransactionRequest struct {
 	Total  int                         `json:"total"`
 	UserId int                         `json:"user_id"`
 	Books  []BookRequestForTransaction `json:"books"`
-	Image  string                      `json:"image"`
+	// Image  string                      `json:"image" form:"image" gorm:"type: varchar(255)"`
 }
 type UpdateTransactionRequest struct {
 	Total  int                         `json:"total"`
 	UserId int                         `json:"user_id"`
 	Books  []BookRequestForTransaction `json:"books"`
 	Status string                      `json:"status"`
-	Image  string                      `json:"image"`
+	// Image  string                      `json:"image" form:"image" gorm:"type: varchar(255)"`
 }
 
 type UpdateTransactionByAdminRequest struct {

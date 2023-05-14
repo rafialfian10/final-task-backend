@@ -29,5 +29,5 @@ type TransactionResponse struct {
 	User       models.UserResponse          `json:"user"`
 	BookId     int                          `json:"-"`
 	Book       []BookResponseForTransaction `json:"book"`
-	Image      string                       `json:"image"`
+	// Image      string                       `json:"image" gorm:"type: varchar(255)"`
 }

@@ -1,7 +1,6 @@
 package handlers
 
 import (
-	"context"
 	"crypto/tls"
 	"encoding/json"
 	"fmt"
@@ -16,8 +15,6 @@ import (
 	"waysbook/models"
 	"waysbook/repositories"
 
-	"github.com/cloudinary/cloudinary-go/v2"
-	"github.com/cloudinary/cloudinary-go/v2/api/uploader"
 	"github.com/go-playground/validator/v10"
 	"github.com/golang-jwt/jwt/v4"
 	"github.com/gorilla/mux"
@@ -46,10 +43,10 @@ func (h *handlerTransaction) FindTransactions(w http.ResponseWriter, r *http.Req
 		return
 	}
 
-	for i, p := range transactions {
-		fileImage := os.Getenv("PATH_FILE") + p.Image
-		transactions[i].Image = fileImage
-	}
+	// for i, p := range transactions {
+	// 	fileImage := os.Getenv("PATH_FILE") + p.Image
+	// 	transactions[i].Image = fileImage
+	// }
 
 	w.WriteHeader(http.StatusOK)
 	res := dto.SuccessResult{Code: http.StatusOK, Data: convertMultipleTransactionResponse(transactions)}
@@ -71,10 +68,10 @@ func (h *handlerTransaction) FindTransactionsByUser(w http.ResponseWriter, r *ht
 		return
 	}
 
-	for i, p := range transactions {
-		fileImage := os.Getenv("PATH_FILE") + p.Image
-		transactions[i].Image = fileImage
-	}
+	// for i, p := range transactions {
+	// 	fileImage := os.Getenv("PATH_FILE") + p.Image
+	// 	transactions[i].Image = fileImage
+	// }
 
 	w.WriteHeader(http.StatusOK)
 	res := dto.SuccessResult{Code: http.StatusOK, Data: convertMultipleTransactionResponse(transactions)}
@@ -95,7 +92,7 @@ func (h *handlerTransaction) GetDetailTransaction(w http.ResponseWriter, r *http
 		return
 	}
 
-	transaction.Image = os.Getenv("PATH_FILE") + transaction.Image
+	// transaction.Image = os.Getenv("PATH_FILE") + transaction.Image
 
 	w.WriteHeader(http.StatusOK)
 	res := dto.SuccessResult{Code: http.StatusOK, Data: convertOneTransactionResponse(transaction)}
@@ -113,8 +110,8 @@ func (h *handlerTransaction) CreateTransaction(w http.ResponseWriter, r *http.Re
 	request.UserId = int(userInfo["id"].(float64))
 
 	// middleware
-	dataImage := r.Context().Value("dataFile")
-	fileImage := dataImage.(string)
+	// dataContex := r.Context().Value("dataFileTrans")
+	// fileImage := dataContex.(string)
 
 	// validasi semua input
 	validation := validator.New()
@@ -127,20 +124,20 @@ func (h *handlerTransaction) CreateTransaction(w http.ResponseWriter, r *http.Re
 	}
 
 	// cloudinary
-	var ctx = context.Background()
-	var CLOUD_NAME = os.Getenv("CLOUD_NAME")
-	var API_KEY = os.Getenv("API_KEY")
-	var API_SECRET = os.Getenv("API_SECRET")
+	// var ctx = context.Background()
+	// var CLOUD_NAME = os.Getenv("CLOUD_NAME")
+	// var API_KEY = os.Getenv("API_KEY")
+	// var API_SECRET = os.Getenv("API_SECRET")
 
-	cld, _ := cloudinary.NewFromParams(CLOUD_NAME, API_KEY, API_SECRET)
+	// cld, _ := cloudinary.NewFromParams(CLOUD_NAME, API_KEY, API_SECRET)
 
-	// Upload file to Cloudinary ...
-	resp, err := cld.Upload.Upload(ctx, fileImage, uploader.UploadParams{Folder: "waysbook"})
-	fmt.Println(resp.SecureURL)
+	// // Upload file to Cloudinary
+	// resp, err := cld.Upload.Upload(ctx, fileImage, uploader.UploadParams{Folder: "waysbook"})
+	// fmt.Println(resp.SecureURL)
 
-	if err != nil {
-		fmt.Println(err.Error())
-	}
+	// if err != nil {
+	// 	fmt.Println(err.Error())
+	// }
 
 	transaction := models.Transaction{
 		Id:        fmt.Sprintf("%d-%d", request.UserId, timeIn("Asia/Jakarta").UnixNano()),
@@ -148,7 +145,7 @@ func (h *handlerTransaction) CreateTransaction(w http.ResponseWriter, r *http.Re
 		Total:     request.Total,
 		Status:    "pending",
 		UserId:    request.UserId,
-		Image:     resp.SecureURL,
+		// Image:     resp.SecureURL,
 	}
 
 	for _, order := range request.Books {
@@ -158,20 +155,21 @@ func (h *handlerTransaction) CreateTransaction(w http.ResponseWriter, r *http.Re
 			OrderQty: order.OrderQty,
 		})
 	}
+	fmt.Println("transaction bro", transaction)
 
 	addTransaction, err := h.TransactionRepository.CreateTransaction(transaction)
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
-		res := dto.ErrorResult{Code: http.StatusBadRequest, Message: err.Error()}
-		json.NewEncoder(w).Encode(res)
+		response := dto.ErrorResult{Code: http.StatusBadRequest, Message: err.Error()}
+		json.NewEncoder(w).Encode(response)
 		return
 	}
 
 	transactionAdded, err := h.TransactionRepository.GetTransaction(addTransaction.Id)
 	if err != nil {
 		w.WriteHeader(http.StatusNotFound)
-		res := dto.ErrorResult{Code: http.StatusBadRequest, Message: err.Error()}
-		json.NewEncoder(w).Encode(res)
+		response := dto.ErrorResult{Code: http.StatusBadRequest, Message: err.Error()}
+		json.NewEncoder(w).Encode(response)
 		return
 	}
 
@@ -206,21 +204,21 @@ func (h *handlerTransaction) CreateTransaction(w http.ResponseWriter, r *http.Re
 
 	// 3. Request create Snap transaction to Midtrans
 	snapResp, _ := s.CreateTransactionToken(req)
-	// fmt.Println("Response :", snapResp)
+	fmt.Println("Midtrans Id :", snapResp)
 
-	transactionAdded, err = h.TransactionRepository.UpdateTokenTransaction(snapResp, transactionAdded.Id)
+	updateTransaction, err := h.TransactionRepository.UpdateTokenTransaction(snapResp, transactionAdded.Id)
 	if err != nil {
 		w.WriteHeader(http.StatusNotFound)
-		res := dto.ErrorResult{
-			Code:    http.StatusBadRequest,
-			Message: err.Error(),
-		}
+		res := dto.ErrorResult{Code: http.StatusBadRequest, Message: err.Error()}
 		json.NewEncoder(w).Encode(res)
 		return
 	}
 
+	// mengambil data transaction yang baru diupdate
+	transactionUpdated, _ := h.TransactionRepository.GetTransaction(updateTransaction.Id)
+
 	w.WriteHeader(http.StatusCreated)
-	res := dto.SuccessResult{Code: http.StatusOK, Data: convertOneTransactionResponse(transactionAdded)}
+	res := dto.SuccessResult{Code: http.StatusOK, Data: convertOneTransactionResponse(transactionUpdated)}
 	json.NewEncoder(w).Encode(res)
 }
 
@@ -469,7 +467,7 @@ func convertOneTransactionResponse(transaction models.Transaction) transactiondt
 		Total:      transaction.Total,
 		Status:     transaction.Status,
 		User:       transaction.User,
-		Image:      transaction.Image,
+		// Image:      transaction.Image,
 	}
 
 	for _, order := range transaction.Cart {
@@ -491,7 +489,6 @@ func convertOneTransactionResponse(transaction models.Transaction) transactiondt
 			OrderQty:           order.OrderQty,
 		})
 	}
-
 	return transactionResponse
 }
 
@@ -507,7 +504,7 @@ func convertMultipleTransactionResponse(transactions []models.Transaction) []tra
 			Total:      t.Total,
 			Status:     t.Status,
 			User:       t.User,
-			Image:      t.Image,
+			// Image:      t.Image,
 		}
 
 		for _, order := range t.Cart {

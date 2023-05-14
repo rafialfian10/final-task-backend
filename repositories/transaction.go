@@ -40,10 +40,10 @@ func (r *repository) GetTransaction(Id string) (models.Transaction, error) {
 	return transaction, err
 }
 
-func (r *repository) CreateTransaction(newTransaction models.Transaction) (models.Transaction, error) {
-	err := r.db.Create(&newTransaction).Error
+func (r *repository) CreateTransaction(transaction models.Transaction) (models.Transaction, error) {
+	err := r.db.Debug().Create(&transaction).Error
 
-	return newTransaction, err
+	return transaction, err
 }
 
 func (r *repository) UpdateTransaction(status string, Id string) (models.Transaction, error) {
@@ -78,9 +78,9 @@ func (r *repository) UpdateTransaction(status string, Id string) (models.Transac
 	return transaction, err
 }
 
-func (r *repository) UpdateTokenTransaction(token string, trxId string) (models.Transaction, error) {
+func (r *repository) UpdateTokenTransaction(token string, Id string) (models.Transaction, error) {
 	var transaction models.Transaction
-	r.db.Preload("User").Preload("Cart").Preload("Cart.Book").First(&transaction, "id = ?", trxId)
+	r.db.Preload("User").Preload("Cart").Preload("Cart.Book").First(&transaction, "id = ?", Id)
 
 	// change transaction token
 	transaction.MidtransId = token
