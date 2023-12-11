@@ -8,7 +8,7 @@ import (
 	"os"
 	"strconv"
 	dto "waysbook/dto/result"
-	usersdto "waysbook/dto/users"
+	usersdto "waysbook/dto/user"
 	"waysbook/models"
 	"waysbook/repositories"
 
