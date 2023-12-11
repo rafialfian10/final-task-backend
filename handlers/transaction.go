@@ -31,7 +31,6 @@ func HandlerTransaction(transactionRepository repositories.TransactionRepository
 	return &handlerTransaction{transactionRepository}
 }
 
-// function get all transaction
 func (h *handlerTransaction) FindTransactions(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 
@@ -49,11 +48,10 @@ func (h *handlerTransaction) FindTransactions(w http.ResponseWriter, r *http.Req
 	// }
 
 	w.WriteHeader(http.StatusOK)
-	res := dto.SuccessResult{Code: http.StatusOK, Data: convertMultipleTransactionResponse(transactions)}
+	res := dto.SuccessResult{Code: http.StatusOK, Data: ConvertMultipleTransactionResponse(transactions)}
 	json.NewEncoder(w).Encode(res)
 }
 
-// function get all data transaction user
 func (h *handlerTransaction) FindTransactionsByUser(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 
@@ -74,12 +72,11 @@ func (h *handlerTransaction) FindTransactionsByUser(w http.ResponseWriter, r *ht
 	// }
 
 	w.WriteHeader(http.StatusOK)
-	res := dto.SuccessResult{Code: http.StatusOK, Data: convertMultipleTransactionResponse(transactions)}
+	res := dto.SuccessResult{Code: http.StatusOK, Data: ConvertMultipleTransactionResponse(transactions)}
 	json.NewEncoder(w).Encode(res)
 }
 
-// function get detail transaction
-func (h *handlerTransaction) GetDetailTransaction(w http.ResponseWriter, r *http.Request) {
+func (h *handlerTransaction) GetTransaction(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 
 	id := mux.Vars(r)["id"]
@@ -95,11 +92,10 @@ func (h *handlerTransaction) GetDetailTransaction(w http.ResponseWriter, r *http
 	// transaction.Image = os.Getenv("PATH_FILE") + transaction.Image
 
 	w.WriteHeader(http.StatusOK)
-	res := dto.SuccessResult{Code: http.StatusOK, Data: convertOneTransactionResponse(transaction)}
+	res := dto.SuccessResult{Code: http.StatusOK, Data: ConvertTransactionResponse(transaction)}
 	json.NewEncoder(w).Encode(res)
 }
 
-// function add transaction
 func (h *handlerTransaction) CreateTransaction(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 
@@ -140,8 +136,8 @@ func (h *handlerTransaction) CreateTransaction(w http.ResponseWriter, r *http.Re
 	// }
 
 	transaction := models.Transaction{
-		Id:        fmt.Sprintf("%d-%d", request.UserId, timeIn("Asia/Jakarta").UnixNano()),
-		OrderDate: timeIn("Asia/Jakarta"),
+		Id:        fmt.Sprintf("%d-%d", request.UserId, TimeIn("Asia/Jakarta").UnixNano()),
+		OrderDate: TimeIn("Asia/Jakarta"),
 		Total:     request.Total,
 		Status:    "pending",
 		UserId:    request.UserId,
@@ -218,11 +214,10 @@ func (h *handlerTransaction) CreateTransaction(w http.ResponseWriter, r *http.Re
 	transactionUpdated, _ := h.TransactionRepository.GetTransaction(updateTransaction.Id)
 
 	w.WriteHeader(http.StatusCreated)
-	res := dto.SuccessResult{Code: http.StatusOK, Data: convertOneTransactionResponse(transactionUpdated)}
+	res := dto.SuccessResult{Code: http.StatusOK, Data: ConvertTransactionResponse(transactionUpdated)}
 	json.NewEncoder(w).Encode(res)
 }
 
-// function update transaction
 func (h *handlerTransaction) UpdateTransaction(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 
@@ -289,11 +284,10 @@ func (h *handlerTransaction) UpdateTransaction(w http.ResponseWriter, r *http.Re
 	}
 
 	w.WriteHeader(http.StatusOK)
-	res := dto.SuccessResult{Code: http.StatusOK, Data: convertOneTransactionResponse(transaction)}
+	res := dto.SuccessResult{Code: http.StatusOK, Data: ConvertTransactionResponse(transaction)}
 	json.NewEncoder(w).Encode(res)
 }
 
-// function update transaction by admin
 func (h *handlerTransaction) UpdateTransactionByAdmin(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 
@@ -337,13 +331,12 @@ func (h *handlerTransaction) UpdateTransactionByAdmin(w http.ResponseWriter, r *
 		return
 	}
 
-	response := dto.SuccessResult{Code: http.StatusOK, Data: convertOneTransactionResponse(getTransactionUpdated)}
+	response := dto.SuccessResult{Code: http.StatusOK, Data: ConvertTransactionResponse(getTransactionUpdated)}
 
 	// mengirim response
 	json.NewEncoder(w).Encode(response)
 }
 
-// function notification
 func (h *handlerTransaction) Notification(w http.ResponseWriter, r *http.Request) {
 	// 1. Initialize empty map
 	var notificationPayload map[string]interface{}
@@ -404,7 +397,6 @@ func (h *handlerTransaction) Notification(w http.ResponseWriter, r *http.Request
 	w.Write([]byte("ok"))
 }
 
-// function send email
 func SendTransactionMail(status string, transaction models.Transaction) {
 	var CONFIG_SMTP_HOST = "smtp.gmail.com"
 	var CONFIG_SMTP_PORT = 587
@@ -458,8 +450,7 @@ func SendTransactionMail(status string, transaction models.Transaction) {
 	}
 }
 
-// function convert one transaction response
-func convertOneTransactionResponse(transaction models.Transaction) transactiondto.TransactionResponse {
+func ConvertTransactionResponse(transaction models.Transaction) transactiondto.TransactionResponse {
 	var transactionResponse = transactiondto.TransactionResponse{
 		Id:         transaction.Id,
 		MidtransId: transaction.MidtransId,
@@ -492,8 +483,7 @@ func convertOneTransactionResponse(transaction models.Transaction) transactiondt
 	return transactionResponse
 }
 
-// function multiple transaction response
-func convertMultipleTransactionResponse(transactions []models.Transaction) []transactiondto.TransactionResponse {
+func ConvertMultipleTransactionResponse(transactions []models.Transaction) []transactiondto.TransactionResponse {
 	var transactionsResponse []transactiondto.TransactionResponse
 
 	for _, t := range transactions {
@@ -531,8 +521,7 @@ func convertMultipleTransactionResponse(transactions []models.Transaction) []tra
 	return transactionsResponse
 }
 
-// function to get the time according to the Indonesian zone
-func timeIn(name string) time.Time {
+func TimeIn(name string) time.Time {
 	loc, err := time.LoadLocation(name)
 	if err != nil {
 		panic(err)

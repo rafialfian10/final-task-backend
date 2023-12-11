@@ -21,7 +21,6 @@ func HandlerCart(orderRepository repositories.CartRepository) *handlerCart {
 	return &handlerCart{orderRepository}
 }
 
-// function get all carts
 func (h *handlerCart) FindCarts(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 
@@ -37,11 +36,10 @@ func (h *handlerCart) FindCarts(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.WriteHeader(http.StatusOK)
-	res := dto.SuccessResult{Code: http.StatusOK, Data: convertMultipleCartResponse(cart)}
+	res := dto.SuccessResult{Code: http.StatusOK, Data: ConvertMultipleCartResponse(cart)}
 	json.NewEncoder(w).Encode(res)
 }
 
-// function get detail cart
 func (h *handlerCart) GetCart(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 
@@ -56,11 +54,10 @@ func (h *handlerCart) GetCart(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.WriteHeader(http.StatusOK)
-	res := dto.SuccessResult{Code: http.StatusOK, Data: convertCartResponse(cart)}
+	res := dto.SuccessResult{Code: http.StatusOK, Data: ConvertCartResponse(cart)}
 	json.NewEncoder(w).Encode(res)
 }
 
-// function add cart
 func (h *handlerCart) CreateCart(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 
@@ -97,7 +94,7 @@ func (h *handlerCart) CreateCart(w http.ResponseWriter, r *http.Request) {
 		}
 
 		w.WriteHeader(http.StatusOK)
-		res := dto.SuccessResult{Code: http.StatusOK, Data: convertCartResponse(cartAdded)}
+		res := dto.SuccessResult{Code: http.StatusOK, Data: ConvertCartResponse(cartAdded)}
 		json.NewEncoder(w).Encode(res)
 		return
 	}
@@ -122,7 +119,7 @@ func (h *handlerCart) CreateCart(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.WriteHeader(http.StatusOK)
-	res := dto.SuccessResult{Code: http.StatusOK, Data: convertCartResponse(cart)}
+	res := dto.SuccessResult{Code: http.StatusOK, Data: ConvertCartResponse(cart)}
 	json.NewEncoder(w).Encode(res)
 }
 
@@ -178,7 +175,7 @@ func (h *handlerCart) UpdateCart(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 	res := dto.SuccessResult{
 		Code: http.StatusOK,
-		Data: convertCartResponse(cart),
+		Data: ConvertCartResponse(cart),
 	}
 	json.NewEncoder(w).Encode(res)
 }
@@ -211,12 +208,25 @@ func (h *handlerCart) DeleteCart(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 	res := dto.SuccessResult{
 		Code: http.StatusOK,
-		Data: convertCartResponse(cartDeleted),
+		Data: ConvertCartResponse(cartDeleted),
 	}
 	json.NewEncoder(w).Encode(res)
 }
 
-func convertMultipleCartResponse(carts []models.Cart) []cartdto.CartResponse {
+func ConvertCartResponse(cart models.Cart) cartdto.CartResponse {
+	return cartdto.CartResponse{
+		Id:            cart.Id,
+		BookId:        cart.BookId,
+		Book:          cart.Book,
+		UserId:        cart.UserId,
+		BookTitle:     cart.Book.Title,
+		BookThumbnail: cart.Book.Thumbnail,
+		Author:        cart.Book.Author,
+		OrderQty:      cart.OrderQty,
+	}
+}
+
+func ConvertMultipleCartResponse(carts []models.Cart) []cartdto.CartResponse {
 	var cartResponse []cartdto.CartResponse
 
 	for _, cart := range carts {
@@ -233,17 +243,4 @@ func convertMultipleCartResponse(carts []models.Cart) []cartdto.CartResponse {
 	}
 
 	return cartResponse
-}
-
-func convertCartResponse(cart models.Cart) cartdto.CartResponse {
-	return cartdto.CartResponse{
-		Id:            cart.Id,
-		BookId:        cart.BookId,
-		Book:          cart.Book,
-		UserId:        cart.UserId,
-		BookTitle:     cart.Book.Title,
-		BookThumbnail: cart.Book.Thumbnail,
-		Author:        cart.Book.Author,
-		OrderQty:      cart.OrderQty,
-	}
 }

@@ -3,12 +3,11 @@ package handlers
 import (
 	"context"
 	"encoding/json"
-	"fmt"
 	"net/http"
 	"os"
 	"strconv"
 	"time"
-	booksdto "waysbook/dto/books"
+	booksdto "waysbook/dto/book"
 	dto "waysbook/dto/result"
 	"waysbook/models"
 	"waysbook/repositories"
@@ -27,7 +26,6 @@ func HanlderBook(BookRepository repositories.BookRepository) *handlerBook {
 	return &handlerBook{BookRepository}
 }
 
-// function get all books
 func (h *handlerBook) FindBooks(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 
@@ -37,17 +35,16 @@ func (h *handlerBook) FindBooks(w http.ResponseWriter, r *http.Request) {
 		json.NewEncoder(w).Encode(err.Error())
 	}
 
-	for i, p := range books {
-		fileImage := os.Getenv("PATH_FILE") + p.Thumbnail
-		books[i].Thumbnail = fileImage
-	}
+	// for i, p := range books {
+	// 	fileImage := os.Getenv("PATH_FILE") + p.Thumbnail
+	// 	books[i].Thumbnail = fileImage
+	// }
 
 	w.WriteHeader(http.StatusOK)
-	response := dto.SuccessResult{Code: http.StatusOK, Data: books}
+	response := dto.SuccessResult{Code: http.StatusOK, Data: ConvertMultipleBookResponse(books)}
 	json.NewEncoder(w).Encode(response)
 }
 
-// function get all books promo
 func (h *handlerBook) FindBooksPromo(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 
@@ -65,7 +62,6 @@ func (h *handlerBook) FindBooksPromo(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(response)
 }
 
-// function get detail book
 func (h *handlerBook) GetBook(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 
@@ -79,26 +75,24 @@ func (h *handlerBook) GetBook(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	book.Thumbnail = os.Getenv("PATH_FILE") + book.Thumbnail
+	// book.Thumbnail = os.Getenv("PATH_FILE") + book.Thumbnail
 
 	w.WriteHeader(http.StatusOK)
-	response := dto.SuccessResult{Code: http.StatusOK, Data: book}
+	response := dto.SuccessResult{Code: http.StatusOK, Data: ConvertBookResponse(book)}
 	json.NewEncoder(w).Encode(response)
 }
 
-// function get book by id
 func (h *handlerBook) CreateBook(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 
 	// get pdf name for book attachment
-	dataPDF := r.Context().Value("dataPDF")
-	filePDF := dataPDF.(string)
+	dataPdf := r.Context().Value("dataPdf")
+	filePdf := dataPdf.(string)
 
 	// get image name for thumbnail
-	dataImage := r.Context().Value("dataFile")
+	dataImage := r.Context().Value("dataImage")
 	fileImage := dataImage.(string)
 
-	//parse data
 	isbn, _ := strconv.Atoi(r.FormValue("isbn"))
 	pages, _ := strconv.Atoi(r.FormValue("pages"))
 	price, _ := strconv.Atoi(r.FormValue("price"))
@@ -134,16 +128,8 @@ func (h *handlerBook) CreateBook(w http.ResponseWriter, r *http.Request) {
 	cld, _ := cloudinary.NewFromParams(CLOUD_NAME, API_KEY, API_SECRET)
 	cld1, _ := cloudinary.NewFromParams(CLOUD_NAME, API_KEY, API_SECRET)
 
-	resp, err := cld.Upload.Upload(ctx, fileImage, uploader.UploadParams{Folder: "waysbook"})
-	resp1, err1 := cld1.Upload.Upload(ctx, filePDF, uploader.UploadParams{Folder: "waysbook"})
-
-	if err != nil {
-		fmt.Println(err.Error())
-	}
-
-	if err1 != nil {
-		fmt.Println(err.Error())
-	}
+	respImage, _ := cld.Upload.Upload(ctx, fileImage, uploader.UploadParams{Folder: "waysbook"})
+	respDocument, _ := cld1.Upload.Upload(ctx, filePdf, uploader.UploadParams{Folder: "waysbook"})
 
 	publicationDate, _ := time.Parse("2006-01-02", r.FormValue("publication_date"))
 
@@ -159,8 +145,8 @@ func (h *handlerBook) CreateBook(w http.ResponseWriter, r *http.Request) {
 		IsPromo:            false,
 		Discount:           0,
 		PriceAfterDiscount: 0,
-		Book:               resp1.SecureURL,
-		Thumbnail:          resp.SecureURL,
+		Book:               respDocument.SecureURL,
+		Thumbnail:          respImage.SecureURL,
 	}
 
 	dataBook, err := h.BookRepository.CreateBook(book)
@@ -180,31 +166,48 @@ func (h *handlerBook) CreateBook(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.WriteHeader(http.StatusOK)
-	response := dto.SuccessResult{Code: http.StatusOK, Data: bookResponse}
+	response := dto.SuccessResult{Code: http.StatusOK, Data: ConvertBookResponse(bookResponse)}
 	json.NewEncoder(w).Encode(response)
 }
 
-// function update book
 func (h *handlerBook) UpdateBook(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 
 	id, _ := strconv.Atoi(mux.Vars(r)["id"])
 
-	book, err := h.BookRepository.GetBook(int(id))
-	if err != nil {
-		w.WriteHeader(http.StatusBadRequest)
-		response := dto.ErrorResult{Code: http.StatusBadRequest, Message: err.Error()}
+	// get pdf name for book attachment
+	dataPdf := r.Context().Value("dataPdf")
+	if dataPdf == nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		response := dto.ErrorResult{Code: http.StatusInternalServerError, Message: "dataPdf is nil"}
 		json.NewEncoder(w).Encode(response)
 		return
 	}
 
-	// get pdf name for book attachment
-	dataPDF := r.Context().Value("dataPDF")
-	filePDF := dataPDF.(string)
+	filePdf, ok := dataPdf.(string)
+	if !ok {
+		w.WriteHeader(http.StatusInternalServerError)
+		response := dto.ErrorResult{Code: http.StatusInternalServerError, Message: "dataPdf is not a string"}
+		json.NewEncoder(w).Encode(response)
+		return
+	}
 
 	// get image name for thumbnail
-	dataImage := r.Context().Value("dataFile")
-	fileImage := dataImage.(string)
+	dataImage := r.Context().Value("dataImage")
+	if dataImage == nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		response := dto.ErrorResult{Code: http.StatusInternalServerError, Message: "dataImage is nil"}
+		json.NewEncoder(w).Encode(response)
+		return
+	}
+
+	fileImage, ok := dataImage.(string)
+	if !ok {
+		w.WriteHeader(http.StatusInternalServerError)
+		response := dto.ErrorResult{Code: http.StatusInternalServerError, Message: "dataImage is not a string"}
+		json.NewEncoder(w).Encode(response)
+		return
+	}
 
 	// cloudinary
 	var ctx = context.Background()
@@ -212,24 +215,53 @@ func (h *handlerBook) UpdateBook(w http.ResponseWriter, r *http.Request) {
 	var API_KEY = os.Getenv("API_KEY")
 	var API_SECRET = os.Getenv("API_SECRET")
 
-	// Add your Cloudinary credentials ...
 	cld, _ := cloudinary.NewFromParams(CLOUD_NAME, API_KEY, API_SECRET)
 	cld1, _ := cloudinary.NewFromParams(CLOUD_NAME, API_KEY, API_SECRET)
 
-	resp, err := cld.Upload.Upload(ctx, fileImage, uploader.UploadParams{Folder: "waysbook"})
-	resp1, err1 := cld1.Upload.Upload(ctx, filePDF, uploader.UploadParams{Folder: "waysbook"})
+	respImage, _ := cld.Upload.Upload(ctx, fileImage, uploader.UploadParams{Folder: "waysbook"})
+	respDocument, _ := cld1.Upload.Upload(ctx, filePdf, uploader.UploadParams{Folder: "waysbook"})
 
+	var imageSecureURL string
+	if respImage != nil && respImage.SecureURL != "" {
+		imageSecureURL = respImage.SecureURL
+	}
+
+	var documentSecureURL string
+	if respDocument != nil && respDocument.SecureURL != "" {
+		documentSecureURL = respDocument.SecureURL
+	}
+
+	isbn, _ := strconv.Atoi(r.FormValue("isbn"))
+	pages, _ := strconv.Atoi(r.FormValue("pages"))
+	price, _ := strconv.Atoi(r.FormValue("price"))
+	quota, _ := strconv.Atoi(r.FormValue("quota"))
+
+	request := booksdto.UpdateBookRequest{
+		Title:           r.FormValue("title"),
+		PublicationDate: r.FormValue("publication_date"),
+		ISBN:            isbn,
+		Pages:           pages,
+		Author:          r.FormValue("author"),
+		Price:           price,
+		Description:     r.FormValue("description"),
+		Quota:           quota,
+		Book:            documentSecureURL,
+		Thumbnail:       imageSecureURL,
+	}
+
+	validation := validator.New()
+	err := validation.Struct(request)
 	if err != nil {
-		fmt.Println(err.Error())
+		w.WriteHeader(http.StatusInternalServerError)
+		response := dto.ErrorResult{Code: http.StatusInternalServerError, Message: err.Error()}
+		json.NewEncoder(w).Encode(response)
+		return
 	}
 
-	if err1 != nil {
-		fmt.Println(err.Error())
-	}
+	book, _ := h.BookRepository.GetBook(id)
 
-	// title
-	if r.FormValue("title") != "" {
-		book.Title = r.FormValue("title")
+	if request.Title != "" {
+		book.Title = request.Title
 	}
 
 	// parse time
@@ -239,53 +271,40 @@ func (h *handlerBook) UpdateBook(w http.ResponseWriter, r *http.Request) {
 		book.PublicationDate = date
 	}
 
-	// isbn
-	isbn, _ := strconv.Atoi(r.FormValue("isbn"))
 	if isbn != 0 {
 		book.ISBN = isbn
 	}
 
-	// pages
-	pages, _ := strconv.Atoi(r.FormValue("pages"))
 	if pages != 0 {
 		book.Pages = pages
 	}
 
-	// author
-	if r.FormValue("author") != "" {
-		book.Author = r.FormValue("author")
+	if request.Author != "" {
+		book.Author = request.Author
 	}
 
-	// price
-	price, _ := strconv.Atoi(r.FormValue("price"))
 	if price != 0 {
-		book.Price = price
+		book.Pages = price
 	}
 
-	// quota
-	quota, _ := strconv.Atoi(r.FormValue("quota"))
+	if request.Description != "" {
+		book.Description = request.Description
+	}
+
 	if quota != 0 {
-		book.Quota = quota
+		book.Pages = quota
 	}
 
-	// description
-	if r.FormValue("description") != "" {
-		book.Description = r.FormValue("description")
+	if request.Thumbnail != "" {
+		book.Thumbnail = request.Thumbnail
 	}
 
-	// image
-	if resp.SecureURL != "" {
-		book.Thumbnail = resp.SecureURL
-	}
-
-	// book
-	if resp1.SecureURL != "" {
-		book.Book = resp1.SecureURL
+	if request.Book != "" {
+		book.Book = request.Book
 	}
 
 	newBook, _ := h.BookRepository.UpdateBook(book)
 
-	// jika ada error maka tampilkan ErrorResult
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		response := dto.ErrorResult{Code: http.StatusInternalServerError, Message: err.Error()}
@@ -293,7 +312,6 @@ func (h *handlerBook) UpdateBook(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// panggil function getTrip agar setelah data di create data id akan keluar response
 	newBookResponse, err := h.BookRepository.GetBook(newBook.Id)
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
@@ -302,13 +320,11 @@ func (h *handlerBook) UpdateBook(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// jika tidak ada error maka SuccessResult
 	w.WriteHeader(http.StatusOK)
-	response := dto.SuccessResult{Code: http.StatusOK, Data: convertResponseBook(newBookResponse)}
+	response := dto.SuccessResult{Code: http.StatusOK, Data: ConvertBookResponse(newBookResponse)}
 	json.NewEncoder(w).Encode(response)
 }
 
-// function update book promo
 func (h *handlerBook) UpdateBookPromo(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 
@@ -350,7 +366,6 @@ func (h *handlerBook) UpdateBookPromo(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(response)
 }
 
-// function delete book
 func (h *handlerBook) DeleteBook(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 
@@ -379,19 +394,89 @@ func (h *handlerBook) DeleteBook(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(response)
 }
 
-// function convert response book
-func convertResponseBook(u models.Book) booksdto.BookResponse {
-	return booksdto.BookResponse{
-		Id:              u.Id,
-		Title:           u.Title,
-		PublicationDate: u.PublicationDate.Format("2 January 2006"),
-		ISBN:            u.ISBN,
-		Pages:           u.Pages,
-		Author:          u.Author,
-		Quota:           u.Quota,
-		Price:           u.Price,
-		Description:     u.Description,
-		Book:            u.Book,
-		Thumbnail:       u.Thumbnail,
+func (h *handlerBook) DeleteBookImage(w http.ResponseWriter, r *http.Request) error {
+	id, _ := strconv.Atoi(mux.Vars(r)["id"])
+
+	if err := h.BookRepository.DeleteBookImage(id); err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		response := dto.ErrorResult{Code: http.StatusInternalServerError, Message: err.Error()}
+		json.NewEncoder(w).Encode(response)
+		return err
 	}
+
+	book, err := h.BookRepository.GetBook(id)
+	if err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		response := dto.ErrorResult{Code: http.StatusBadRequest, Message: err.Error()}
+		json.NewEncoder(w).Encode(response)
+		return err
+	}
+
+	w.WriteHeader(http.StatusOK)
+	response := dto.SuccessResult{Code: http.StatusOK, Data: ConvertBookResponse(book)}
+	json.NewEncoder(w).Encode(response)
+
+	return nil
+}
+
+func (h *handlerBook) DeleteBookDocument(w http.ResponseWriter, r *http.Request) error {
+	id, _ := strconv.Atoi(mux.Vars(r)["id"])
+
+	if err := h.BookRepository.DeleteBookDocument(id); err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		response := dto.ErrorResult{Code: http.StatusInternalServerError, Message: err.Error()}
+		json.NewEncoder(w).Encode(response)
+		return err
+	}
+
+	book, err := h.BookRepository.GetBook(id)
+	if err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		response := dto.ErrorResult{Code: http.StatusBadRequest, Message: err.Error()}
+		json.NewEncoder(w).Encode(response)
+		return err
+	}
+
+	w.WriteHeader(http.StatusOK)
+	response := dto.SuccessResult{Code: http.StatusOK, Data: ConvertBookResponse(book)}
+	json.NewEncoder(w).Encode(response)
+
+	return nil
+}
+
+func ConvertBookResponse(book models.Book) booksdto.BookResponse {
+	return booksdto.BookResponse{
+		Id:              book.Id,
+		Title:           book.Title,
+		PublicationDate: book.PublicationDate.Format("2 January 2006"),
+		ISBN:            book.ISBN,
+		Pages:           book.Pages,
+		Author:          book.Author,
+		Quota:           book.Quota,
+		Price:           book.Price,
+		Description:     book.Description,
+		Book:            book.Book,
+		Thumbnail:       book.Thumbnail,
+	}
+}
+
+func ConvertMultipleBookResponse(books []models.Book) []booksdto.BookResponse {
+	var bookResponse []booksdto.BookResponse
+
+	for _, book := range books {
+		bookResponse = append(bookResponse, booksdto.BookResponse{
+			Id:              book.Id,
+			Title:           book.Title,
+			PublicationDate: book.PublicationDate.Format("Monday, 2 January 2006"),
+			ISBN:            book.ISBN,
+			Pages:           book.Pages,
+			Author:          book.Author,
+			Price:           book.Price,
+			Description:     book.Description,
+			Quota:           book.Quota,
+			Book:            book.Book,
+			Thumbnail:       book.Thumbnail,
+		})
+	}
+	return bookResponse
 }

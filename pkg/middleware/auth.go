@@ -15,6 +15,10 @@ type Result struct {
 	Message string      `json:"message"`
 }
 
+type contextKey string
+
+const userInfoKey contextKey = "userInfo"
+
 // function Auth berfungsi untuk validasi token(user baru dapat melakukan CRUD setelah memasukkan token)
 func Auth(next http.HandlerFunc) http.HandlerFunc {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -43,7 +47,7 @@ func Auth(next http.HandlerFunc) http.HandlerFunc {
 		}
 
 		//
-		ctx := context.WithValue(r.Context(), "userInfo", claims)
+		ctx := context.WithValue(r.Context(), userInfoKey, claims)
 		r = r.WithContext(ctx)
 		next.ServeHTTP(w, r.WithContext(ctx))
 	})

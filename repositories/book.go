@@ -12,9 +12,11 @@ type BookRepository interface {
 	FindBookPromo() ([]models.Book, error)
 	CreateBook(book models.Book) (models.Book, error)
 	UpdateBook(book models.Book) (models.Book, error)
-	UpdateBookPromo(Id int, discount int) (models.Book, error)
+	UpdateBookPromo(ID int, discount int) (models.Book, error)
 	GetBooksByPromo() ([]models.Book, error)
 	DeleteBook(book models.Book) (models.Book, error)
+	DeleteBookImage(ID int) error
+	DeleteBookDocument(ID int) error
 }
 
 func RepositoryBook(db *gorm.DB) *repository {
@@ -43,7 +45,6 @@ func (r *repository) GetBook(Id int) (models.Book, error) {
 
 func (r *repository) CreateBook(book models.Book) (models.Book, error) {
 	err := r.db.Debug().Create(&book).Error
-
 	return book, err
 }
 
@@ -53,16 +54,15 @@ func (r *repository) UpdateBook(book models.Book) (models.Book, error) {
 	return book, err
 }
 
-func (r *repository) UpdateBookPromo(Id int, discount int) (models.Book, error) {
+func (r *repository) UpdateBookPromo(ID int, discount int) (models.Book, error) {
 	var book models.Book
-	r.db.First(&book, "id=?", Id)
+	r.db.First(&book, "id=?", ID)
 
 	book.IsPromo = true
 	book.Discount = discount
 
 	// Calculate Price After Discount
 	book.PriceAfterDiscount = book.Price - (book.Price * discount / 100)
-
 	err := r.db.Model(&book).Updates(book).Error
 
 	return book, err
@@ -70,7 +70,6 @@ func (r *repository) UpdateBookPromo(Id int, discount int) (models.Book, error) 
 
 func (r *repository) GetBooksByPromo() ([]models.Book, error) {
 	var books []models.Book
-
 	err := r.db.Preload("User").Find(&books, "is_promo=?", true).Error
 
 	return books, err
@@ -80,4 +79,12 @@ func (r *repository) DeleteBook(book models.Book) (models.Book, error) {
 	err := r.db.Debug().Delete(&book).Error
 
 	return book, err
+}
+
+func (r *repository) DeleteBookImage(ID int) error {
+	return r.db.Model(&models.Book{}).Where("id = ?", ID).UpdateColumn("thumbnail", gorm.Expr("NULL")).Error
+}
+
+func (r *repository) DeleteBookDocument(ID int) error {
+	return r.db.Model(&models.Book{}).Where("id = ?", ID).UpdateColumn("book", gorm.Expr("NULL")).Error
 }

@@ -17,17 +17,14 @@ import (
 	"github.com/golang-jwt/jwt/v4"
 )
 
-// Handle struct
 type handlerAuth struct {
 	AuthRepository repositories.AuthRepository
 }
 
-// Handle Authentication
 func HandlerAuth(AuthRepository repositories.AuthRepository) *handlerAuth {
 	return &handlerAuth{AuthRepository}
 }
 
-// membuat struct function Register
 func (h *handlerAuth) Register(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 
@@ -84,19 +81,66 @@ func (h *handlerAuth) Register(w http.ResponseWriter, r *http.Request) {
 
 	// jika tidak ada error maka panggil SuccesResult dan data akan di isi dengan func convertresponseRegister
 	w.WriteHeader(http.StatusOK)
-	response := dto.SuccessResult{Code: http.StatusOK, Data: convertResponseRegister(userData)}
+	response := dto.SuccessResult{Code: http.StatusOK, Data: ConvertResponseRegister(userData)}
 	json.NewEncoder(w).Encode(response)
 }
 
-// function convertResponseRegister
-func convertResponseRegister(u models.User) authdto.RegisterResponse {
-	return authdto.RegisterResponse{
-		Email:    u.Email,
-		Password: u.Password,
+func (h *handlerAuth) RegisterAdmin(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+
+	// mengambil data user dari request body
+	var request authdto.RegisterRequest
+	json.NewDecoder(r.Body).Decode(&request)
+
+	// memvalidasi inputan dari request body berdasarkan struct dto.CountryRequest
+	validation := validator.New()
+	err := validation.Struct(request)
+	if err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		response := dto.ErrorResult{Code: http.StatusBadRequest, Message: err.Error()}
+		json.NewEncoder(w).Encode(response)
+		return
 	}
+
+	// menghashing password
+	hashedPassword, err := bcrypt.HashingPassword(request.Password)
+	if err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		response := dto.ErrorResult{Code: http.StatusBadRequest, Message: err.Error()}
+		json.NewEncoder(w).Encode(response)
+		return
+	}
+
+	// membuat object user baru dengan cetakan models.User
+	user := models.User{
+		Name:     request.Name,
+		Email:    request.Email,
+		Password: hashedPassword,
+		Gender:   request.Gender,
+		Phone:    request.Phone,
+		Address:  request.Address,
+		Role:     "admin",
+	}
+
+	// mengirim data user baru ke database
+	adminData, err := h.AuthRepository.Register(user)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		response := dto.ErrorResult{Code: http.StatusInternalServerError, Message: err.Error()}
+		json.NewEncoder(w).Encode(response)
+		return
+	}
+
+	// menyiapkan response
+	w.WriteHeader(http.StatusOK)
+	response := dto.SuccessResult{
+		Code: http.StatusOK,
+		Data: ConvertResponseRegister(adminData),
+	}
+	// mengirim response
+	json.NewEncoder(w).Encode(response)
 }
 
-// membuat struct function Login
 func (h *handlerAuth) Login(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 
@@ -160,73 +204,16 @@ func (h *handlerAuth) Login(w http.ResponseWriter, r *http.Request) {
 
 	// jika tidak ada error struct LoginResponse akan di isi data request user
 	loginResponse := authdto.LoginResponse{
-		Name:     user.Name,
-		Email:    user.Email,
-		Password: user.Password,
-		Token:    token,
-		Role:     user.Role,
+		Name:  user.Name,
+		Email: user.Email,
+		// Password: user.Password,
+		Token: token,
+		Role:  user.Role,
 	}
 
 	// dan login loginResponse akan dijadikan value dari data
 	w.Header().Set("Content-Type", "application/json")
 	response := dto.SuccessResult{Code: http.StatusOK, Data: loginResponse}
-	json.NewEncoder(w).Encode(response)
-}
-
-// membuat fungsi yang digunakan untuk mendaftarkan user baru
-func (h *handlerAuth) RegisterAdmin(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "application/json")
-
-	// mengambil data user dari request body
-	var request authdto.RegisterRequest
-	json.NewDecoder(r.Body).Decode(&request)
-
-	// memvalidasi inputan dari request body berdasarkan struct dto.CountryRequest
-	validation := validator.New()
-	err := validation.Struct(request)
-	if err != nil {
-		w.WriteHeader(http.StatusBadRequest)
-		response := dto.ErrorResult{Code: http.StatusBadRequest, Message: err.Error()}
-		json.NewEncoder(w).Encode(response)
-		return
-	}
-
-	// menghashing password
-	hashedPassword, err := bcrypt.HashingPassword(request.Password)
-	if err != nil {
-		w.WriteHeader(http.StatusBadRequest)
-		response := dto.ErrorResult{Code: http.StatusBadRequest, Message: err.Error()}
-		json.NewEncoder(w).Encode(response)
-		return
-	}
-
-	// membuat object user baru dengan cetakan models.User
-	user := models.User{
-		Name:     request.Name,
-		Email:    request.Email,
-		Password: hashedPassword,
-		Gender:   request.Gender,
-		Phone:    request.Phone,
-		Address:  request.Address,
-		Role:     "admin",
-	}
-
-	// mengirim data user baru ke database
-	adminData, err := h.AuthRepository.Register(user)
-	if err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
-		response := dto.ErrorResult{Code: http.StatusInternalServerError, Message: err.Error()}
-		json.NewEncoder(w).Encode(response)
-		return
-	}
-
-	// menyiapkan response
-	w.WriteHeader(http.StatusOK)
-	response := dto.SuccessResult{
-		Code: http.StatusOK,
-		Data: convertResponseRegister(adminData),
-	}
-	// mengirim response
 	json.NewEncoder(w).Encode(response)
 }
 
@@ -255,4 +242,11 @@ func (h *handlerAuth) CheckAuth(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	response := dto.SuccessResult{Code: http.StatusOK, Data: CheckAuthResponse}
 	json.NewEncoder(w).Encode(response)
+}
+
+func ConvertResponseRegister(u models.User) authdto.RegisterResponse {
+	return authdto.RegisterResponse{
+		Email:    u.Email,
+		Password: u.Password,
+	}
 }
