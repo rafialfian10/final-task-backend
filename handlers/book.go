@@ -394,54 +394,54 @@ func (h *handlerBook) DeleteBook(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(response)
 }
 
-func (h *handlerBook) DeleteBookImage(w http.ResponseWriter, r *http.Request) error {
+func (h *handlerBook) DeleteBookThumbnail(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+
 	id, _ := strconv.Atoi(mux.Vars(r)["id"])
 
-	if err := h.BookRepository.DeleteBookImage(id); err != nil {
+	_, err := h.BookRepository.DeleteBookThumbnail(id)
+	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		response := dto.ErrorResult{Code: http.StatusInternalServerError, Message: err.Error()}
 		json.NewEncoder(w).Encode(response)
-		return err
+		return
 	}
 
-	book, err := h.BookRepository.GetBook(id)
+	data, err := h.BookRepository.GetBook(id)
 	if err != nil {
-		w.WriteHeader(http.StatusBadRequest)
-		response := dto.ErrorResult{Code: http.StatusBadRequest, Message: err.Error()}
+		w.WriteHeader(http.StatusInternalServerError)
+		response := dto.ErrorResult{Code: http.StatusInternalServerError, Message: err.Error()}
 		json.NewEncoder(w).Encode(response)
-		return err
+		return
 	}
 
 	w.WriteHeader(http.StatusOK)
-	response := dto.SuccessResult{Code: http.StatusOK, Data: ConvertBookResponse(book)}
+	response := dto.SuccessResult{Code: http.StatusOK, Data: ConvertBookResponse(data)}
 	json.NewEncoder(w).Encode(response)
-
-	return nil
 }
 
-func (h *handlerBook) DeleteBookDocument(w http.ResponseWriter, r *http.Request) error {
+func (h *handlerBook) DeleteBookDocument(w http.ResponseWriter, r *http.Request) {
 	id, _ := strconv.Atoi(mux.Vars(r)["id"])
 
-	if err := h.BookRepository.DeleteBookDocument(id); err != nil {
+	_, err := h.BookRepository.DeleteBookDocument(id)
+	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		response := dto.ErrorResult{Code: http.StatusInternalServerError, Message: err.Error()}
 		json.NewEncoder(w).Encode(response)
-		return err
+		return
 	}
 
-	book, err := h.BookRepository.GetBook(id)
+	data, err := h.BookRepository.GetBook(id)
 	if err != nil {
-		w.WriteHeader(http.StatusBadRequest)
-		response := dto.ErrorResult{Code: http.StatusBadRequest, Message: err.Error()}
+		w.WriteHeader(http.StatusInternalServerError)
+		response := dto.ErrorResult{Code: http.StatusInternalServerError, Message: err.Error()}
 		json.NewEncoder(w).Encode(response)
-		return err
+		return
 	}
 
 	w.WriteHeader(http.StatusOK)
-	response := dto.SuccessResult{Code: http.StatusOK, Data: ConvertBookResponse(book)}
+	response := dto.SuccessResult{Code: http.StatusOK, Data: ConvertBookResponse(data)}
 	json.NewEncoder(w).Encode(response)
-
-	return nil
 }
 
 func ConvertBookResponse(book models.Book) booksdto.BookResponse {

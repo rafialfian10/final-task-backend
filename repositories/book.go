@@ -15,8 +15,8 @@ type BookRepository interface {
 	UpdateBookPromo(ID int, discount int) (models.Book, error)
 	GetBooksByPromo() ([]models.Book, error)
 	DeleteBook(book models.Book) (models.Book, error)
-	DeleteBookImage(ID int) error
-	DeleteBookDocument(ID int) error
+	DeleteBookThumbnail(ID int) (models.Book, error)
+	DeleteBookDocument(ID int) (models.Book, error)
 }
 
 func RepositoryBook(db *gorm.DB) *repository {
@@ -81,10 +81,10 @@ func (r *repository) DeleteBook(book models.Book) (models.Book, error) {
 	return book, err
 }
 
-func (r *repository) DeleteBookImage(ID int) error {
-	return r.db.Model(&models.Book{}).Where("id = ?", ID).UpdateColumn("thumbnail", gorm.Expr("NULL")).Error
+func (r *repository) DeleteBookThumbnail(ID int) (models.Book, error) {
+	return models.Book{}, r.db.Model(&models.Book{}).Where("id = ?", ID).UpdateColumn("thumbnail", gorm.Expr("NULL")).Error
 }
 
-func (r *repository) DeleteBookDocument(ID int) error {
-	return r.db.Model(&models.Book{}).Where("id = ?", ID).UpdateColumn("book", gorm.Expr("NULL")).Error
+func (r *repository) DeleteBookDocument(ID int) (models.Book, error) {
+	return models.Book{}, r.db.Model(&models.Book{}).Where("id = ?", ID).UpdateColumn("book", gorm.Expr("NULL")).Error
 }
