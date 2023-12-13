@@ -74,7 +74,7 @@ func (h *handlerUser) UpdateUser(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// middleware
-	dataContex := r.Context().Value("dataFile")
+	dataContex := r.Context().Value("dataImage")
 	filepath := dataContex.(string)
 
 	// cloudinary
