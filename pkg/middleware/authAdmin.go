@@ -15,10 +15,6 @@ type ResultAdmin struct {
 	Message string      `json:"message"`
 }
 
-type contextKeyAdmin string
-
-const userInfoKeyAdmin contextKeyAdmin = "userInfo"
-
 func AuthAdmin(next http.HandlerFunc) http.HandlerFunc {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
@@ -51,7 +47,7 @@ func AuthAdmin(next http.HandlerFunc) http.HandlerFunc {
 		}
 
 		// menyiapkan context dengan key "userInfo" yang berisi jwt claim
-		ctx := context.WithValue(r.Context(), userInfoKeyAdmin, claims)
+		ctx := context.WithValue(r.Context(), "userInfo", claims)
 
 		// mengirim nilai context ke object http.HandlerFunc yang menjadi parameter saat fungsi middleware ini dipanggil
 		next.ServeHTTP(w, r.WithContext(ctx))

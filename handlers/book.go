@@ -446,17 +446,20 @@ func (h *handlerBook) DeleteBookDocument(w http.ResponseWriter, r *http.Request)
 
 func ConvertBookResponse(book models.Book) booksdto.BookResponse {
 	return booksdto.BookResponse{
-		Id:              book.Id,
-		Title:           book.Title,
-		PublicationDate: book.PublicationDate.Format("2 January 2006"),
-		ISBN:            book.ISBN,
-		Pages:           book.Pages,
-		Author:          book.Author,
-		Quota:           book.Quota,
-		Price:           book.Price,
-		Description:     book.Description,
-		Book:            book.Book,
-		Thumbnail:       book.Thumbnail,
+		Id:                 book.Id,
+		Title:              book.Title,
+		PublicationDate:    book.PublicationDate.Format("2 January 2006"),
+		ISBN:               book.ISBN,
+		Pages:              book.Pages,
+		Author:             book.Author,
+		Price:              book.Price,
+		IsPromo:            book.IsPromo,
+		Discount:           book.Discount,
+		PriceAfterDiscount: book.PriceAfterDiscount,
+		Description:        book.Description,
+		Quota:              book.Quota,
+		Book:               book.Book,
+		Thumbnail:          book.Thumbnail,
 	}
 }
 
@@ -465,17 +468,20 @@ func ConvertMultipleBookResponse(books []models.Book) []booksdto.BookResponse {
 
 	for _, book := range books {
 		bookResponse = append(bookResponse, booksdto.BookResponse{
-			Id:              book.Id,
-			Title:           book.Title,
-			PublicationDate: book.PublicationDate.Format("Monday, 2 January 2006"),
-			ISBN:            book.ISBN,
-			Pages:           book.Pages,
-			Author:          book.Author,
-			Price:           book.Price,
-			Description:     book.Description,
-			Quota:           book.Quota,
-			Book:            book.Book,
-			Thumbnail:       book.Thumbnail,
+			Id:                 book.Id,
+			Title:              book.Title,
+			PublicationDate:    book.PublicationDate.Format("Monday, 2 January 2006"),
+			ISBN:               book.ISBN,
+			Pages:              book.Pages,
+			Author:             book.Author,
+			Price:              book.Price,
+			IsPromo:            book.IsPromo,
+			Discount:           book.Discount,
+			PriceAfterDiscount: book.Discount,
+			Description:        book.Description,
+			Quota:              book.Quota,
+			Book:               book.Book,
+			Thumbnail:          book.Thumbnail,
 		})
 	}
 	return bookResponse
