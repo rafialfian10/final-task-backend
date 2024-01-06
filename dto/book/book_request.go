@@ -23,7 +23,7 @@ type UpdateBookRequest struct {
 	Description     string `json:"description" form:"description" gorm:"type: text"`
 	Book            string `json:"book" form:"book"`
 	Thumbnail       string `json:"thumbnail" form:"thumbnail"`
-	Quota           int    `json:"quota" form:"quota"`
+	Quota           int    `json:"quota" form:"quota" gorm:"type: int"`
 }
 
 type UpdateBookPromoRequest struct {

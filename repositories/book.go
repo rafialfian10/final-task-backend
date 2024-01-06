@@ -25,7 +25,7 @@ func RepositoryBook(db *gorm.DB) *repository {
 
 func (r *repository) FindBooks() ([]models.Book, error) {
 	var books []models.Book
-	err := r.db.Debug().Find(&books).Error
+	err := r.db.Debug().Order("id desc").Find(&books).Error
 
 	return books, err
 }

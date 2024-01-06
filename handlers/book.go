@@ -284,7 +284,7 @@ func (h *handlerBook) UpdateBook(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if price != 0 {
-		book.Pages = price
+		book.Price = price
 	}
 
 	if request.Description != "" {
@@ -292,7 +292,7 @@ func (h *handlerBook) UpdateBook(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if quota != 0 {
-		book.Pages = quota
+		book.Quota = quota
 	}
 
 	if request.Thumbnail != "" {
