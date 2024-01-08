@@ -404,7 +404,7 @@ func SendTransactionMail(status string, transaction models.Transaction) {
 	var CONFIG_AUTH_EMAIL = os.Getenv("SYSTEM_EMAIL")
 	var CONFIG_AUTH_PASSWORD = os.Getenv("SYSTEM_PASSWORD")
 
-	var tripName = transaction.User.Name
+	var bookName = transaction.User.Name
 	var price = strconv.Itoa(transaction.Total)
 
 	mailer := gomail.NewMessage()
@@ -433,7 +433,7 @@ func SendTransactionMail(status string, transaction models.Transaction) {
 		<li>Iklan : %s</li>
       </ul>
       </body>
-    </html>`, tripName, price, status, "Terima kasih"))
+    </html>`, bookName, price, status, "Terima kasih"))
 
 	dialer := gomail.NewDialer(
 		CONFIG_SMTP_HOST,
