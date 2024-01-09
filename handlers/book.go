@@ -85,13 +85,13 @@ func (h *handlerBook) GetBook(w http.ResponseWriter, r *http.Request) {
 func (h *handlerBook) CreateBook(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 
-	// get pdf name for book attachment
+	// get middleware photo
 	dataPdf := r.Context().Value("dataPdf")
 	filePdf := dataPdf.(string)
 
-	// get image name for thumbnail
-	dataImage := r.Context().Value("dataImage")
-	fileImage := dataImage.(string)
+	// get middleware thumbnail
+	dataThumbnail := r.Context().Value("dataThumbnail")
+	fileImage := dataThumbnail.(string)
 
 	isbn, _ := strconv.Atoi(r.FormValue("isbn"))
 	pages, _ := strconv.Atoi(r.FormValue("pages"))
@@ -193,18 +193,18 @@ func (h *handlerBook) UpdateBook(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// get image name for thumbnail
-	dataImage := r.Context().Value("dataImage")
-	if dataImage == nil {
+	dataThumbnail := r.Context().Value("dataThumbnail")
+	if dataThumbnail == nil {
 		w.WriteHeader(http.StatusInternalServerError)
-		response := dto.ErrorResult{Code: http.StatusInternalServerError, Message: "dataImage is nil"}
+		response := dto.ErrorResult{Code: http.StatusInternalServerError, Message: "dataThumbnail is nil"}
 		json.NewEncoder(w).Encode(response)
 		return
 	}
 
-	fileImage, ok := dataImage.(string)
+	fileImage, ok := dataThumbnail.(string)
 	if !ok {
 		w.WriteHeader(http.StatusInternalServerError)
-		response := dto.ErrorResult{Code: http.StatusInternalServerError, Message: "dataImage is not a string"}
+		response := dto.ErrorResult{Code: http.StatusInternalServerError, Message: "dataThumbnail is not a string"}
 		json.NewEncoder(w).Encode(response)
 		return
 	}

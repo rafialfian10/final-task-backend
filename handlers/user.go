@@ -3,7 +3,6 @@ package handlers
 import (
 	"context"
 	"encoding/json"
-	"fmt"
 	"net/http"
 	"os"
 	"strconv"
@@ -14,6 +13,7 @@ import (
 
 	"github.com/cloudinary/cloudinary-go/v2"
 	"github.com/cloudinary/cloudinary-go/v2/api/uploader"
+	"github.com/go-playground/validator/v10"
 	"github.com/golang-jwt/jwt/v4"
 	"github.com/gorilla/mux"
 )
@@ -64,18 +64,21 @@ func (h *handlerUser) UpdateUser(w http.ResponseWriter, r *http.Request) {
 
 	id, _ := strconv.Atoi(mux.Vars(r)["id"])
 
-	user, err := h.UserRepository.GetUser(int(id))
-
-	if err != nil {
-		w.WriteHeader(http.StatusBadRequest)
-		response := dto.ErrorResult{Code: http.StatusBadRequest, Message: err.Error()}
+	dataPhoto := r.Context().Value("dataPhoto")
+	if dataPhoto == nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		response := dto.ErrorResult{Code: http.StatusInternalServerError, Message: "dataPhoto is nil"}
 		json.NewEncoder(w).Encode(response)
 		return
 	}
 
-	// middleware
-	dataContex := r.Context().Value("dataImage")
-	filepath := dataContex.(string)
+	filePhoto, ok := dataPhoto.(string)
+	if !ok {
+		w.WriteHeader(http.StatusInternalServerError)
+		response := dto.ErrorResult{Code: http.StatusInternalServerError, Message: "dataPhoto is not a string"}
+		json.NewEncoder(w).Encode(response)
+		return
+	}
 
 	// cloudinary
 	var ctx = context.Background()
@@ -84,14 +87,32 @@ func (h *handlerUser) UpdateUser(w http.ResponseWriter, r *http.Request) {
 	var API_SECRET = os.Getenv("API_SECRET")
 
 	cld, _ := cloudinary.NewFromParams(CLOUD_NAME, API_KEY, API_SECRET)
+	respPhoto, _ := cld.Upload.Upload(ctx, filePhoto, uploader.UploadParams{Folder: "waysbook"})
 
-	// Upload file to Cloudinary ...
-	resp, err := cld.Upload.Upload(ctx, filepath, uploader.UploadParams{Folder: "waysbook"})
-	fmt.Println(resp.SecureURL)
-
-	if err != nil {
-		fmt.Println(err.Error())
+	var photoSecureURL string
+	if respPhoto != nil && respPhoto.SecureURL != "" {
+		photoSecureURL = respPhoto.SecureURL
 	}
+
+	request := usersdto.UpdateUserRequest{
+		Name:    r.FormValue("name"),
+		Email:   r.FormValue("email"),
+		Gender:  r.FormValue("gender"),
+		Phone:   r.FormValue("phone"),
+		Address: r.FormValue("address"),
+		Photo:   photoSecureURL,
+	}
+
+	validation := validator.New()
+	err := validation.Struct(request)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		response := dto.ErrorResult{Code: http.StatusInternalServerError, Message: err.Error()}
+		json.NewEncoder(w).Encode(response)
+		return
+	}
+
+	user, _ := h.UserRepository.GetUser(id)
 
 	// name
 	if r.FormValue("name") != "" {
@@ -103,9 +124,9 @@ func (h *handlerUser) UpdateUser(w http.ResponseWriter, r *http.Request) {
 		user.Email = r.FormValue("email")
 	}
 
-	// password
-	if r.FormValue("password") != "" {
-		user.Password = r.FormValue("password")
+	// gender
+	if r.FormValue("gender") != "" {
+		user.Gender = r.FormValue("gender")
 	}
 
 	// phone
@@ -118,9 +139,9 @@ func (h *handlerUser) UpdateUser(w http.ResponseWriter, r *http.Request) {
 		user.Address = r.FormValue("address")
 	}
 
-	// image
-	if resp.SecureURL != "" {
-		user.Thumbnail = resp.SecureURL
+	// photo
+	if request.Photo != "" {
+		user.Photo = request.Photo
 	}
 
 	newUser, err := h.UserRepository.UpdateUser(user)
@@ -173,12 +194,13 @@ func (h *handlerUser) DeleteUser(w http.ResponseWriter, r *http.Request) {
 
 func convertResponseUser(u models.User) usersdto.UserResponse {
 	return usersdto.UserResponse{
-		Id:        u.Id,
-		Name:      u.Name,
-		Email:     u.Email,
-		Gender:    u.Gender,
-		Phone:     u.Phone,
-		Address:   u.Address,
-		Thumbnail: u.Thumbnail,
+		Id:      u.Id,
+		Name:    u.Name,
+		Email:   u.Email,
+		Gender:  u.Gender,
+		Phone:   u.Phone,
+		Address: u.Address,
+		Photo:   u.Photo,
+		Role:    u.Role,
 	}
 }
